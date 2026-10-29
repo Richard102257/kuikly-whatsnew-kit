@@ -6,6 +6,7 @@ before_install:
   - sdk use java 17.0.9-zulu
   - sdk install gradle 8.5
   - sdk use gradle 8.5
+  - gradle wrapper --gradle-version 8.5
 
 install:
   - ./gradlew build publishToMavenLocal -x test
