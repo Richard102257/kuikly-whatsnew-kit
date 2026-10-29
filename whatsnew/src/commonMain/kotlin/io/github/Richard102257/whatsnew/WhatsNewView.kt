@@ -84,7 +84,7 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
             }
 
             whatsNew.features.forEachIndexed { index, feature ->
-                addChild(createFeatureView(feature)) { }
+                addChild(this@WhatsNewView.createFeatureView(feature)) { }
                 if (index < whatsNew.features.size - 1) {
                     addChild(DivView()) {
                         attr { height(layout.featureListSpacing) }
@@ -105,13 +105,13 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
             }
 
             whatsNew.secondaryAction?.let { action ->
-                addChild(createSecondaryButton(action, layout)) { }
+                addChild(this@WhatsNewView.createSecondaryButton(action, layout)) { }
                 addChild(DivView()) {
                     attr { height(layout.footerActionSpacing) }
                 }
             }
 
-            addChild(createPrimaryButton(whatsNew.primaryAction, layout)) { }
+            addChild(this@WhatsNewView.createPrimaryButton(whatsNew.primaryAction, layout)) { }
         }
     }
 
