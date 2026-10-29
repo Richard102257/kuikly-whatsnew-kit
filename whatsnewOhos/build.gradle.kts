@@ -19,6 +19,11 @@ android {
     defaultConfig {
         minSdk = 21
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
