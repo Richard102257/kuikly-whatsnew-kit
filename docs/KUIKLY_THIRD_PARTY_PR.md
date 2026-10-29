@@ -59,13 +59,13 @@ dependencyResolutionManagement {
 }
 
 // build.gradle.kts
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 ```
 
 iOS 也可通过 CocoaPods 引入预编译 XCFramework：
 
 ```ruby
-pod 'WhatsNew', '~> 1.1.0'
+pod 'WhatsNew', '~> 1.1.1'
 ```
 
 ### 使用示例
@@ -102,7 +102,7 @@ override fun body(): ViewBuilder = {
 
 ## 4. 提交前检查
 
-- [ ] JitPack 上 `v1.1.0` 构建成功
+- [ ] JitPack 上 `v1.1.1` 构建成功
 - [ ] GitHub Release 上有 `WhatsNew.xcframework.zip`
 - [ ] `pod spec lint WhatsNew.podspec` 通过
 - [ ] README 中的版本号与 tag 一致

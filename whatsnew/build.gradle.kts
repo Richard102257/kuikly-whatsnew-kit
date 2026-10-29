@@ -7,9 +7,9 @@ plugins {
 // ─── 版本配置 ───
 object MavenConfig {
     const val GROUP = "io.github.Richard102257"
-    const val VERSION = "1.1.0"
+    const val VERSION = "1.1.1"
     // 鸿蒙版本加后缀避免 Maven 元数据冲突
-    const val VERSION_OHOS = "1.1.0_ohos"
+    const val VERSION_OHOS = "1.1.1_ohos"
 }
 
 // Kuikly 版本（格式：<Kuikly 版本>-<Kotlin 版本>）

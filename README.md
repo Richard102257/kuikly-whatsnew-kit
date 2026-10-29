@@ -35,7 +35,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
             }
         }
     }
@@ -49,7 +49,7 @@ kotlin {
 
 ```ruby
 # Podfile
-pod 'WhatsNew', '~> 1.1.0'
+pod 'WhatsNew', '~> 1.1.1'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`，由 GitHub Actions
@@ -59,7 +59,7 @@ podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`，由 GitHub Act
 
 ```kotlin
 // 与 Android 相同的 Maven 依赖；鸿蒙侧仅需 expect/actual 提供的版本号与存储实现
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 ```
 
 > 📖 详细集成教程请查看 [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md)
@@ -117,7 +117,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
             }
         }
     }

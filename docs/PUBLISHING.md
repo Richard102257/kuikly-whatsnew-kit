@@ -30,16 +30,16 @@ install:
 发布步骤：
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
-然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.1.0` 触发构建。
+然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.1.1` 触发构建。
 
 用户侧引用：
 
 ```kotlin
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 ```
 
 本地验证构建：

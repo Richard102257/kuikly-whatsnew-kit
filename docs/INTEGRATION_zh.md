@@ -43,7 +43,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // 唯一模块：纯 Kuikly DSL 组件，全平台通用
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
             }
         }
     }
@@ -83,14 +83,14 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
             }
         }
     }
 }
 ```
 
-> 💡 `1.1.0` 替换为实际发布的 tag 版本号。
+> 💡 `1.1.1` 替换为实际发布的 tag 版本号。
 
 ---
 
