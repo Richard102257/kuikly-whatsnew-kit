@@ -11,9 +11,3 @@ before_install:
 # Kuikly requires Android SDK
 android:
   accept-license: true
-
-# Build and publish all library modules
-build:
-  - ./gradlew :whatsnew:publishToMavenLocal
-  - ./gradlew :whatsnewAndroid:publishToMavenLocal
-  - ./gradlew :whatsnewOhos:publishToMavenLocal
