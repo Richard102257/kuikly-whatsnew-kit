@@ -88,16 +88,15 @@ framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用
 
 ## ✨ Features
 
-- ✅ **One codebase, all platforms** — Android, iOS, HarmonyOS, Web, Mini Programs
+- ✅ **One codebase, all platforms** — Android、iOS、HarmonyOS 共用同一份 Kuikly DSL 代码
 - ✅ **Kuikly DSL + Compose 页面** — `WhatsNewView` 用于 Kuikly DSL；Compose 页面用 `WhatsNewComposeState` 控制展示
 - ✅ **Manual & Automatic presentation** — Full control or let the environment handle it
-- ✅ **Version tracking** — Persistent, in-memory, and iCloud-like storage options
+- ✅ **Version tracking** — 可插拔的 `WhatsNewVersionStore`（内存 / 平台持久化 / 自定义）
 - ✅ **Patch version fallback** — Automatically falls back to nearest matching version
 - ✅ **Fully customizable layout** — Adjust spacing, padding, colors, and more
 - ✅ **Primary & Secondary actions** — Dismiss, open URLs, or execute custom actions
 - ✅ **Native performance** — Uses Kuikly's native rendering, not Skia
-- ✅ **Lightweight** — Minimal footprint, no heavy dependencies
-- ✅ **Dynamic capability** — Supports hot updates via Kuikly Dynamic
+- ✅ **Lightweight** — 只依赖 Kuikly core，无其他第三方依赖
 
 ---
 
@@ -266,11 +265,11 @@ val whatsNew = WhatsNew(
 
 | Platform | Status |
 |----------|--------|
-| Android | ✅ Full |
-| iOS | ✅ Full |
-| HarmonyOS | ✅ Full |
-| Web (H5) | ✅ Beta |
-| Mini Programs | ✅ Beta |
+| Android | ✅ 已验证（JitPack AAR + Demo APK） |
+| iOS | ✅ 已验证（XCFramework + CocoaPods trunk） |
+| HarmonyOS | ✅ 代码就绪（`ohosArm64Main` expect/actual；本机无鸿蒙工具链，未实机验证） |
+| Web (H5) | ⛔ 未声明 js target |
+| Mini Programs | ⛔ 未声明 js target |
 
 ---
 
