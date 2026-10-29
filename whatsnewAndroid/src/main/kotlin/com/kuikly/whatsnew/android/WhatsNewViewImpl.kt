@@ -140,10 +140,10 @@ class WhatsNewViewImpl(context: Context) : LinearLayout(context) {
             text = action.title
             textSize = 17f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setTextColor(action.foregroundColor.toInt())
+            setTextColor(action.foregroundColor.toIntColor())
             gravity = android.view.Gravity.CENTER
             background = createRoundedRect(action.backgroundColor, 1f, dp(action.cornerRadius))
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dp(layout.primaryButtonHeight))
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dp(whatsNew?.layout?.primaryButtonHeight ?: 52f))
             isClickable = true
             setOnClickListener { action.onDismiss?.invoke() }
         }
@@ -154,10 +154,10 @@ class WhatsNewViewImpl(context: Context) : LinearLayout(context) {
             text = action.title
             textSize = 16f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setTextColor(action.foregroundColor.toInt())
+            setTextColor(action.foregroundColor.toIntColor())
             gravity = android.view.Gravity.CENTER
             background = createRoundedRect(0x00000000, 0f, dp(action.cornerRadius))
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dp(layout.secondaryButtonHeight))
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dp(whatsNew?.layout?.secondaryButtonHeight ?: 48f))
             isClickable = true
             setOnClickListener {
                 when (action.action) {
@@ -174,7 +174,7 @@ class WhatsNewViewImpl(context: Context) : LinearLayout(context) {
     private fun createRoundedRect(color: Long, alpha: Float, radius: Float): android.graphics.drawable.GradientDrawable {
         return android.graphics.drawable.GradientDrawable().apply {
             cornerRadius = dp(radius).toFloat()
-            setColor(((color.toInt() and 0xFFFFFF) or ((alpha * 255).toInt() shl 24)))
+            setColor(((color.toIntColor() and 0xFFFFFF) or ((alpha * 255).toInt() shl 24)))
         }
     }
 }
@@ -190,6 +190,7 @@ private fun WhatsNewIcon.tintColor(): Long {
 }
 
 /**
- * Long.toInt 扩展
+ * Long 颜色值转为 Android 可用的 Int 颜色
+ * 将 0xFFRRGGBB 格式的 Long 转为 Android ColorInt
  */
-private fun Long.toInt(): Int = this.toInt()
+fun Long.toIntColor(): Int = this.toInt()
