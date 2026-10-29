@@ -26,14 +26,14 @@ kotlin {
         val ohosArm64Main by getting {
             dependencies {
                 // 依赖 Kuikly Ohos Render
-                api("com.tencent.kuikly-open:core-render-ohos:2.0.0")
+                api("com.tencent.kuikly-open:core-render-ohos:2.1.1-2.0.21")
             }
         }
     }
 }
 
 android {
-    namespace = "io.github.Richard102257"
+    namespace = "io.github.Richard102257.whatsnew"
     compileSdk = 34
     defaultConfig { minSdk = 21 }
 }

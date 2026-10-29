@@ -10,8 +10,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.kuikly.whatsnew:core:1.0.0")
-                implementation("com.kuikly.whatsnew:compose:1.0.0")  // 或 dsl
+                implementation("io.github.Richard102257.whatsnew:core:1.0.0")
+                implementation("io.github.Richard102257.whatsnew:compose:1.0.0")  // 或 dsl
             }
         }
     }
@@ -57,7 +57,7 @@ getRenderView().addSubView(WhatsNewDslView(whatsNew = whatsNew))
 
 | 方式 | 依赖格式 | 难度 |
 |------|----------|------|
-| Maven Central | `com.kuikly.whatsnew:core:1.0.0` | ⭐ |
+| Maven Central | `io.github.Richard102257.whatsnew:core:1.0.0` | ⭐ |
 | JitPack | `com.github.org:core:1.0.0` | ⭐ |
 | 源码集成 | 复制源码到项目 | ⭐⭐ |
 | Git Submodule | `git submodule add` | ⭐⭐ |

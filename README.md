@@ -194,7 +194,7 @@ val whatsNew = whatsNew {
 
 ```kotlin
 import io.github.Richard102257.*
-import com.kuikly.core.views.DivView
+import com.tencent.kuikly.core.views.DivView
 
 class MyPager : Pager() {
     override fun createRenderView() {

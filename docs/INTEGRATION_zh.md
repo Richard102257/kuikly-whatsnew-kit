@@ -43,11 +43,11 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // 核心模块（必须）
-                implementation("com.kuikly.whatsnew:core:1.0.0")
+                implementation("io.github.Richard102257.whatsnew:core:1.0.0")
 
                 // 选择你需要的 UI 实现（二选一或都要）
-                implementation("com.kuikly.whatsnew:compose:1.0.0")  // Compose DSL
-                implementation("com.kuikly.whatsnew:dsl:1.0.0")      // Kuikly DSL
+                implementation("io.github.Richard102257.whatsnew:compose:1.0.0")  // Compose DSL
+                implementation("io.github.Richard102257.whatsnew:dsl:1.0.0")      // Kuikly DSL
             }
         }
     }
@@ -168,8 +168,8 @@ git submodule update --init --recursive
 ### 场景 1：手动展示（最简单）
 
 ```kotlin
-import com.kuikly.whatsnew.compose.*
-import com.kuikly.whatsnew.core.*
+import io.github.Richard102257.whatsnew.compose.*
+import io.github.Richard102257.whatsnew.core.*
 
 @Composable
 fun MyScreen() {
@@ -222,8 +222,8 @@ fun MyScreen() {
 ### 场景 2：自动展示（推荐）
 
 ```kotlin
-import com.kuikly.whatsnew.compose.*
-import com.kuikly.whatsnew.core.*
+import io.github.Richard102257.whatsnew.compose.*
+import io.github.Richard102257.whatsnew.core.*
 
 // ─── 在 Application 级别初始化 ───
 class MyApp : ComposeContainer() {
@@ -348,10 +348,10 @@ val whatsNew = whatsNew {
 ### 场景 1：手动展示
 
 ```kotlin
-import com.kuikly.core.annotations.Page
-import com.kuikly.core.pager.Pager
-import com.kuikly.whatsnew.dsl.*
-import com.kuikly.whatsnew.core.*
+import com.tencent.kuikly.core.annotations.Page
+import com.tencent.kuikly.core.pager.Pager
+import io.github.Richard102257.whatsnew.dsl.*
+import io.github.Richard102257.whatsnew.core.*
 
 @Page("myPage")
 class MyPage : Pager() {
@@ -510,7 +510,7 @@ class AutoWhatsNewPage : Pager() {
 #### 前置条件
 
 1. 注册 [Sonatype JIRA](https://issues.sonatype.org) 账号
-2. 创建 GroupId 对应的项目工单（如 `com.kuikly.whatsnew`）
+2. 创建 GroupId 对应的项目工单（如 `io.github.Richard102257.whatsnew`）
 3. 生成 GPG 签名密钥
 
 #### 配置 `~/.gradle/gradle.properties`

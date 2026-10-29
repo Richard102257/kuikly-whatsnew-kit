@@ -1,24 +1,20 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("native.cocoapods")
     id("com.android.library")
 }
+
+val isMacOs: Boolean = System.getProperty("os.name").startsWith("Mac")
 
 kotlin {
     androidTarget {
         compilations.all { kotlinOptions { jvmTarget = "1.8" } }
     }
 
-    listOf(iosX64(), iosArm4(), iosSimulatorArm64()).forEach {
-        it.binaries.framework { baseName = "shared" }
-    }
-
-    cocoapods {
-        summary = "Kuikly WhatsNewKit Demo Shared"
-        homepage = "https://github.com/Richard102257/kuikly-whatsnew-kit"
-        version = "1.0.0"
-        ios.deploymentTarget = "13.0"
-        framework { baseName = "shared" }
+    // iOS 目标只能在 macOS 上构建
+    if (isMacOs) {
+        listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
+            it.binaries.framework { baseName = "shared" }
+        }
     }
 
     sourceSets {
@@ -32,20 +28,23 @@ kotlin {
                 implementation(project(":whatsnewAndroid"))
             }
         }
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
+
+        if (isMacOs) {
+            val iosX64Main by getting
+            val iosArm64Main by getting
+            val iosSimulatorArm64Main by getting
+            val iosMain by creating {
+                dependsOn(commonMain)
+                iosX64Main.dependsOn(this)
+                iosArm64Main.dependsOn(this)
+                iosSimulatorArm64Main.dependsOn(this)
+            }
         }
     }
 }
 
 android {
-    namespace = "com.kuikly.whatsnew.shared"
+    namespace = "io.github.Richard102257.whatsnew.shared"
     compileSdk = 34
     defaultConfig { minSdk = 21 }
 }

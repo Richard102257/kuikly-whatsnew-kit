@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    namespace = "com.kuikly.whatsnew.demo"
+    namespace = "io.github.Richard102257.whatsnew.demo"
     compileSdk = 34
     defaultConfig {
-        applicationId = "com.kuikly.whatsnew.demo"
+        applicationId = "io.github.Richard102257.whatsnew.demo"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
@@ -24,8 +24,8 @@ dependencies {
     implementation(project(":whatsnewAndroid"))
 
     // Kuikly 依赖
-    implementation("com.tencent.kuikly-open:core:2.0.0")
-    implementation("com.tencent.kuikly-open:core-render-android:2.0.0")
+    implementation("com.tencent.kuikly-open:core:2.1.1-2.0.21")
+    implementation("com.tencent.kuikly-open:core-render-android:2.1.1-2.0.21")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

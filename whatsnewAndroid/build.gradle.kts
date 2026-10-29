@@ -1,7 +1,7 @@
 plugins {
+    kotlin("android")
     id("com.android.library")
     id("maven-publish")
-    id("signing")
 }
 
 object MavenConfig {
@@ -14,7 +14,7 @@ version = MavenConfig.VERSION
 group = MavenConfig.GROUP
 
 android {
-    namespace = "io.github.Richard102257.android"
+    namespace = "io.github.Richard102257.whatsnew.android"
     compileSdk = 34
     defaultConfig {
         minSdk = 21
@@ -27,9 +27,9 @@ android {
 
 dependencies {
     // 依赖 Kuikly Android Render
-    api("com.tencent.kuikly-open:core-render-android:2.0.0")
+    api("com.tencent.kuikly-open:core-render-android:2.1.1-2.0.21")
     // 依赖 Kuikly Core
-    api("com.tencent.kuikly-open:core:2.0.0")
+    api("com.tencent.kuikly-open:core:2.1.1-2.0.21")
 }
 
 // ─── Maven 发布配置 ───
@@ -78,6 +78,8 @@ publishing {
     }
 }
 
-signing {
-    sign(publishing.publications)
+// 仅在有签名配置时启用（JitPack 构建无需签名）
+if (project.hasProperty("signing.keyId")) {
+    apply(plugin = "signing")
+    configure<SigningExtension> { sign(publishing.publications) }
 }

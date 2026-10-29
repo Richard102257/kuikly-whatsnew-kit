@@ -1,7 +1,7 @@
-package com.kuikly.whatsnew.ios
+package io.github.Richard102257.whatsnew.ios
 
-import com.kuikly.whatsnew.*
-import com.kuikly.whatsnew.WhatsNewConst
+import io.github.Richard102257.whatsnew.*
+import io.github.Richard102257.whatsnew.WhatsNewConst
 import platform.UIKit.*
 import platform.Foundation.*
 import platform.CoreGraphics.*
