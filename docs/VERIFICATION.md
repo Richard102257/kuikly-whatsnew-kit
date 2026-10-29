@@ -61,6 +61,21 @@ sha256 `dfaf9f0762bf18be936d693d07d0e9a240ea0f6bd0cffabdea61ae0a4d031a15`，
 | `pod trunk push`（实际发布） | ✅ `KuiklyWhatsNew 1.1.1`，2026-10-29 16:31 UTC |
 | trunk 所有者 | `Richard <lhui1022@gmail.com>` |
 | CDN 上可读到 podspec | ✅ `https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.1.1/KuiklyWhatsNew.podspec.json` |
+| 真实工程 `pod install` | ✅ `Installing KuiklyWhatsNew (1.1.1)` + `OpenKuiklyIOSRender (2.30.0)` |
+
+`pod install` 实测（干净目录，仅 Podfile）：
+
+```ruby
+install! 'cocoapods', :integrate_targets => false
+platform :ios, '13.0'
+target 'App' do
+  pod 'KuiklyWhatsNew', '~> 1.1.1'
+end
+```
+
+结果：`Pods/KuiklyWhatsNew/WhatsNew.xcframework`（两个切片）+ `LICENSE` 就位。
+
+> CDN 索引有约 10 分钟缓存，刚发布后第一次安装可能需要 `pod install --repo-update`。
 
 pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用，故发布名为
 `KuiklyWhatsNew`；framework 名与代码 `import` 不受影响。
