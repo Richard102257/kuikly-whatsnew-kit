@@ -1,0 +1,13 @@
+platform :ios, '13.0'
+use_frameworks!
+
+target 'iosApp' do
+  # Kuikly 核心
+  pod 'Kuikly', :path => '../'
+
+  # WhatsNewKit iOS 平台侧
+  pod 'whatsnewIOS', :path => '../'
+
+  # Demo 共享模块
+  pod 'shared', :path => '../'
+end

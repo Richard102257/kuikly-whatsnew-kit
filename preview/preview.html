@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuikly WhatsNewKit - Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px 24px 60px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .header p { font-size: 15px; opacity: 0.9; }
+  .header .badges { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .header .badge {
+    background: rgba(255,255,255,0.2); border-radius: 12px; padding: 4px 12px;
+    font-size: 12px; font-weight: 500; backdrop-filter: blur(10px);
+  }
+
+  /* ── Platform Tabs ── */
+  .platform-tabs {
+    display: flex; gap: 0; justify-content: center;
+    margin: -24px auto 24px; max-width: 400px;
+    background: white; border-radius: 16px; padding: 4px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    position: relative; z-index: 10;
+  }
+  .platform-tab {
+    flex: 1; padding: 10px 16px; border: none; background: transparent;
+    border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: #666; transition: all 0.2s;
+  }
+  .platform-tab.active { background: #667eea; color: white; }
+
+  /* ── Phone Frame ── */
+  .phone-wrapper {
+    display: flex; justify-content: center; padding: 0 16px 40px;
+    perspective: 1200px;
+  }
+  .phone-frame {
+    width: 375px; height: 750px; background: #1a1a1a; border-radius: 44px;
+    padding: 12px; box-shadow:
+      0 0 0 2px #333,
+      0 8px 40px rgba(0,0,0,0.3),
+      0 2px 8px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .phone-frame::before {
+    content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 28px; background: #1a1a1a; border-radius: 0 0 18px 18px; z-index: 2;
+  }
+  .phone-screen {
+    width: 100%; height: 100%; border-radius: 32px; overflow: hidden;
+    position: relative; background: #fff;
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    height: 44px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; font-size: 14px; font-weight: 600; color: #000;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-bar .icons { display: flex; gap: 5px; align-items: center; }
+
+  /* ── WhatsNew Sheet ── */
+  .sheet-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 100; opacity: 0; transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .sheet-overlay.visible { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    width: 100%; max-height: 85%; background: #fff;
+    border-radius: 20px 20px 0 0; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  }
+  .sheet-overlay.visible .sheet { transform: translateY(0); }
+
+  .sheet-handle {
+    display: flex; justify-content: center; padding: 12px 0 8px;
+  }
+  .sheet-handle span {
+    width: 36px; height: 5px; background: #ddd; border-radius: 3px;
+  }
+
+  /* ── WhatsNew Content ── */
+  .wn-content { padding: 0 24px 24px; }
+  .wn-title {
+    font-size: 32px; font-weight: 800; text-align: center;
+    color: #1a1a1a; margin-bottom: 32px; letter-spacing: -0.5px;
+  }
+
+  .wn-feature {
+    display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px;
+    animation: fadeSlideUp 0.5s ease backwards;
+  }
+  .wn-feature:nth-child(2) { animation-delay: 0.05s; }
+  .wn-feature:nth-child(3) { animation-delay: 0.1s; }
+  .wn-feature:nth-child(4) { animation-delay: 0.15s; }
+  .wn-feature:nth-child(5) { animation-delay: 0.2s; }
+
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .wn-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 24px;
+  }
+
+  .wn-feature-text h3 {
+    font-size: 17px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;
+  }
+  .wn-feature-text p {
+    font-size: 14px; color: #666; line-height: 1.4;
+  }
+
+  /* ── Buttons ── */
+  .wn-buttons { padding: 16px 24px 32px; }
+  .wn-btn-primary {
+    width: 100%; height: 52px; border: none; border-radius: 14px;
+    font-size: 17px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .wn-btn-primary:active { transform: scale(0.97); }
+  .wn-btn-secondary {
+    width: 100%; height: 48px; border: none; background: transparent;
+    font-size: 16px; font-weight: 500; cursor: pointer; margin-bottom: 12px;
+    border-radius: 14px; transition: background 0.15s;
+  }
+  .wn-btn-secondary:active { background: rgba(0,0,0,0.05); }
+
+  /* ── Variant Selector ── */
+  .variant-selector {
+    max-width: 800px; margin: 0 auto; padding: 0 16px 40px;
+  }
+  .variant-title {
+    font-size: 18px; font-weight: 700; color: #1a1a1a;
+    margin-bottom: 16px; text-align: center;
+  }
+  .variant-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .variant-card {
+    background: #fff; border-radius: 16px; padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); cursor: pointer;
+    transition: all 0.2s; border: 2px solid transparent;
+  }
+  .variant-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+  .variant-card.active { border-color: #667eea; }
+  .variant-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #1a1a1a; }
+  .variant-card p { font-size: 13px; color: #888; line-height: 1.4; }
+  .variant-card .tag {
+    display: inline-block; margin-top: 10px; padding: 3px 8px;
+    border-radius: 6px; font-size: 11px; font-weight: 600;
+  }
+  .tag-compose { background: #e8f5e9; color: #4CAF50; }
+  .tag-dsl { background: #e3f2fd; color: #2196F3; }
+  .tag-auto { background: #fff3e0; color: #FF9800; }
+
+  /* ── Code Preview ── */
+  .code-section {
+    max-width: 800px; margin: 0 auto; padding: 0 16px 60px;
+  }
+  .code-block {
+    background: #1e1e2e; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  }
+  .code-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 18px; background: #181825;
+  }
+  .code-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .code-dot.r { background: #ff5f56; }
+  .code-dot.y { background: #ffbd2e; }
+  .code-dot.g { background: #27c93f; }
+  .code-title { margin-left: auto; font-size: 12px; color: #666; font-family: monospace; }
+  .code-body {
+    padding: 20px; overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px; line-height: 1.6; color: #cdd6f4;
+  }
+  .code-body .kw { color: #cba6f7; }
+  .code-body .fn { color: #89b4fa; }
+  .code-body .str { color: #a6e3a1; }
+  .code-body .num { color: #fab387; }
+  .code-body .com { color: #6c7086; font-style: italic; }
+  .code-body .type { color: #f9e2af; }
+  .code-body .prop { color: #89dceb; }
+
+  /* ── Integration Steps ── */
+  .integration {
+    max-width: 800px; margin: 0 auto; padding: 0 16px 60px;
+  }
+  .integration h2 { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 28px; }
+  .step {
+    display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start;
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%; background: #667eea;
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: #666; line-height: 1.5; }
+  .step-content code {
+    background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px;
+  }
+
+  /* ── Theme variants ── */
+  .theme-dark .phone-frame { background: #2a2a2a; }
+  .theme-dark .phone-frame::before { background: #2a2a2a; }
+  .theme-dark .phone-screen { background: #1a1a1a; }
+  .theme-dark .status-bar { color: #fff; }
+  .theme-dark .sheet { background: #2a2a2a; }
+  .theme-dark .wn-title { color: #fff; }
+  .theme-dark .wn-feature-text h3 { color: #eee; }
+  .theme-dark .wn-feature-text p { color: #999; }
+  .theme-dark .wn-btn-secondary:active { background: rgba(255,255,255,0.05); }
+
+  /* ── Responsive ── */
+  @media (max-width: 420px) {
+    .phone-frame { width: 100%; height: auto; aspect-ratio: 375/750; border-radius: 0; padding: 0; box-shadow: none; }
+    .phone-frame::before { display: none; }
+    .phone-screen { border-radius: 0; }
+    .phone-wrapper { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="header">
+  <h1>🎊 Kuikly WhatsNewKit</h1>
+  <p>基于 Kuikly 跨端框架的 WhatsNewKit 实现 · 一码多端</p>
+  <div class="badges">
+    <span class="badge">Android</span>
+    <span class="badge">iOS</span>
+    <span class="badge">HarmonyOS</span>
+    <span class="badge">Web</span>
+    <span class="badge">Mini Programs</span>
+  </div>
+</div>
+
+<!-- ═══════════════ PHONE PREVIEW ═══════════════ -->
+<div class="phone-wrapper" id="phoneWrapper">
+  <div class="phone-frame" id="phoneFrame">
+    <div class="phone-screen">
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M1 4.5C2.86 4.5 4.5 5.4 5.5 6.8L7 5.3C5.14 3.44 2.56 2.2 0 2.2V4.5H1ZM4 7.5C5.2 8.7 6.8 9.5 8.5 9.5V12C6.2 12 4 11.1 2.3 9.7L4 7.5ZM7 10.2C8.5 10.8 10.2 11.2 12 11.2V13.5C9.7 13.5 7.5 13 5.5 12L7 10.2ZM12 2.2V4.5C14.2 4.5 16 6.3 16 8.5C16 10.7 14.2 12.5 12 12.5V14.8C15.4 14.8 18.2 12 18.2 8.5C18.2 5 15.4 2.2 12 2.2Z"/></svg>
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="0" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="2" width="10" height="8" rx="1" fill="currentColor"/><rect x="16" y="3.5" width="2" height="5" rx="1" fill="currentColor"/></svg>
+        </div>
+      </div>
+
+      <!-- Main App Content -->
+      <div style="padding: 16px; text-align: center; padding-top: 60px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+        <h3 style="font-size: 20px; font-weight: 700; color: #1a1a1a;" id="appTitle">My App</h3>
+        <p style="font-size: 14px; color: #888; margin-top: 8px;" id="appSubtitle">Tap below to see WhatsNew</p>
+        <button id="showBtn" style="
+          margin-top: 32px; padding: 14px 32px; border: none; border-radius: 14px;
+          background: #667eea; color: white; font-size: 16px; font-weight: 600;
+          cursor: pointer; box-shadow: 0 4px 16px rgba(102,126,234,0.4);
+          transition: transform 0.15s;
+        " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          Show What's New
+        </button>
+      </div>
+
+      <!-- WhatsNew Sheet Overlay -->
+      <div class="sheet-overlay" id="sheetOverlay" style="display: none;">
+        <div class="sheet">
+          <div class="sheet-handle"><span></span></div>
+          <div class="wn-content" id="wnContent">
+            <!-- Dynamically filled -->
+          </div>
+          <div class="wn-buttons" id="wnButtons">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VARIANT SELECTOR ═══════════════ -->
+<div class="variant-selector">
+  <div class="variant-title">选择预览场景</div>
+  <div class="variant-grid">
+    <div class="variant-card active" onclick="selectVariant(0)">
+      <h4>📋 标准版本更新</h4>
+      <p>Compose DSL 手动展示，包含功能列表、主/次按钮</p>
+      <span class="tag tag-compose">Compose DSL</span>
+    </div>
+    <div class="variant-card" onclick="selectVariant(1)">
+      <h4>🚀 大版本发布</h4>
+      <p>更多功能特性展示，自定义布局和颜色主题</p>
+      <span class="tag tag-dsl">Kuikly DSL</span>
+    </div>
+    <div class="variant-card" onclick="selectVariant(2)">
+      <h4>🌙 深色模式</h4>
+      <p>深色主题下的 WhatsNew 展示效果</p>
+      <span class="tag tag-auto">Auto Theme</span>
+    </div>
+    <div class="variant-card" onclick="selectVariant(3)">
+      <h4>⚡ 极简风格</h4>
+      <p>少量功能，紧凑布局，无次要按钮</p>
+      <span class="tag tag-compose">Minimal</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CODE PREVIEW ═══════════════ -->
+<div class="code-section">
+  <div class="variant-title">核心代码示例</div>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dot r"></div>
+      <div class="code-dot y"></div>
+      <div class="code-dot g"></div>
+      <span class="code-title" id="codeTitle">ComposeDSLExample.kt</span>
+    </div>
+    <div class="code-body" id="codeBody">
+      <!-- Dynamically filled -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ INTEGRATION STEPS ═══════════════ -->
+<div class="integration">
+  <h2>🔧 集成步骤</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h4>添加依赖</h4>
+      <p>在 Kuikly 项目的 <code>build.gradle.kts</code> 的 <code>commonMain</code> 中添加 core 模块，根据需要选择 compose 或 dsl 模块</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h4>定义 WhatsNew 内容</h4>
+      <p>使用 DSL Builder 定义版本号和功能列表，支持多版本管理</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h4>初始化版本存储</h4>
+      <p>调用 <code>createPersistentWhatsNewVersionStore()</code> 创建平台特定的持久化存储</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h4>展示 WhatsNew</h4>
+      <p>手动模式调用 <code>WhatsNewDialog</code> / <code>WhatsNewDslView</code>；自动模式使用 <code>WhatsNewComposeProvider</code></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ Data ═══════════════
+const variants = [
+  {
+    title: "What's New in Kuikly 2.0",
+    subtitle: "My App",
+    btnText: "Show What's New",
+    theme: "light",
+    features: [
+      { icon: "✨", title: "AI 驱动开发", desc: "Kuikly 现在集成 AI 工具，智能生成代码和辅助开发", color: "#667eea" },
+      { icon: "🌍", title: "更多平台支持", desc: "新增 Web 和微信小程序平台，触达更多用户", color: "#03DAC5" },
+      { icon: "⚡", title: "性能提升", desc: "优化渲染管线，带来更快原生性能", color: "#FF5722" },
+      { icon: "🎨", title: "Compose DSL", desc: "使用标准 Jetpack Compose DSL 语法编写跨端 UI", color: "#4CAF50" },
+    ],
+    primaryBtn: { text: "Continue", bg: "#667eea", color: "#fff" },
+    secondaryBtn: { text: "Learn More", color: "#667eea" },
+    code: 'compose',
+    codeFile: 'ComposeDSLExample.kt'
+  },
+  {
+    title: "Kuikly 3.0 重磅发布",
+    subtitle: "Kuikly",
+    btnText: "查看更新",
+    theme: "light",
+    features: [
+      { icon: "🚀", title: "热重载", desc: "开发时即时预览修改，无需重新编译", color: "#E91E63" },
+      { icon: "🔒", title: "增强安全", desc: "数据加密和证书固定，保护用户隐私", color: "#9C27B0" },
+      { icon: "📊", title: "性能监控", desc: "内置性能追踪工具，实时掌握 App 状态", color: "#FF9800" },
+      { icon: "🧩", title: "组件市场", desc: "丰富的社区组件，开箱即用", color: "#00BCD4" },
+      { icon: "🎯", title: "精准定位", desc: "跨端定位组件，统一权限和坐标回调", color: "#8BC34A" },
+    ],
+    primaryBtn: { text: "开始使用", bg: "#764ba2", color: "#fff" },
+    secondaryBtn: { text: "查看更新日志", color: "#764ba2" },
+    code: 'dsl',
+    codeFile: 'KuiklyDSLExample.kt'
+  },
+  {
+    title: "What's New",
+    subtitle: "My App",
+    btnText: "Show Updates",
+    theme: "dark",
+    features: [
+      { icon: "🌙", title: "Dark Mode", desc: "Beautiful dark theme across all platforms", color: "#BB86FC" },
+      { icon: "💬", title: "Chat Component", desc: "Built-in AI chat with streaming support", color: "#03DAC6" },
+      { icon: "🗺️", title: "Maps", desc: "Cross-platform map with native performance", color: "#CF6679" },
+    ],
+    primaryBtn: { text: "Continue", bg: "#BB86FC", color: "#000" },
+    secondaryBtn: { text: "Learn More", color: "#BB86FC" },
+    code: 'compose',
+    codeFile: 'ComposeDarkExample.kt'
+  },
+  {
+    title: "Minor Update",
+    subtitle: "My App",
+    btnText: "Show What's New",
+    theme: "light",
+    features: [
+      { icon: "🐛", title: "Bug Fixes", desc: "Fixed several issues for better stability", color: "#F44336" },
+      { icon: "🔧", title: "Improvements", desc: "General performance and UI refinements", color: "#2196F3" },
+    ],
+    primaryBtn: { text: "Got it!", bg: "#1a1a1a", color: "#fff" },
+    secondaryBtn: null,
+    code: 'compose',
+    codeFile: 'MinimalExample.kt'
+  }
+];
+
+const codeExamples = {
+  compose: `<span class="kw">import</span> com.kuikly.whatsnew.compose.*
+<span class="kw">import</span> com.kuikly.whatsnew.core.*
+
+<span class="kw">@Composable</span>
+<span class="kw">fun</span> <span class="fn">MyScreen</span>() {
+    <span class="kw">val</span> environment = <span class="fn">remember</span> {
+        <span class="fn">WhatsNewEnvironment</span>(
+            versionStore = <span class="fn">createPersistentWhatsNewVersionStore</span>(),
+            whatsNewCollection = <span class="fn">whatsNewCollection</span> {
+                <span class="fn">whatsNew</span>(<span class="str">"2.0.0"</span>) {
+                    <span class="fn">title</span>(<span class="str">"What's New"</span>)
+                    <span class="fn">feature</span>(
+                        imageSource = <span class="type">SystemIcon</span>(<span class="str">"star.fill"</span>),
+                        title = <span class="str">"AI Development"</span>,
+                        subtitle = <span class="str">"Smarter code generation"</span>
+                    )
+                    <span class="fn">primaryAction</span> {
+                        title = <span class="str">"Continue"</span>
+                        backgroundColor = <span class="num">0xFF667EEA</span>
+                    }
+                    <span class="fn">secondaryAction</span> {
+                        title = <span class="str">"Learn More"</span>
+                        <span class="fn">openURL</span>(<span class="str">"https://kuikly.tds.qq.com"</span>)
+                    }
+                }
+            }
+        )
+    }
+
+    <span class="comment">// Auto-presents WhatsNew when new version detected</span>
+    <span class="fn">WhatsNewComposeProvider</span>(environment = environment) {
+        <span class="fn">MainContent</span>()
+    }
+}`,
+  dsl: `<span class="kw">import</span> com.kuikly.whatsnew.dsl.*
+<span class="kw">import</span> com.kuikly.core.annotations.Page
+
+<span class="kw">@Page</span>(<span class="str">"myPage"</span>)
+<span class="kw">class</span> <span class="type">MyPage</span> : <span class="type">Pager</span>() {
+
+    <span class="kw">private val</span> environment = <span class="fn">WhatsNewEnvironment</span>(
+        versionStore = <span class="fn">createPersistentWhatsNewVersionStore</span>(),
+        whatsNewCollection = <span class="fn">whatsNewCollection</span> {
+            <span class="fn">whatsNew</span>(<span class="str">"3.0.0"</span>) {
+                <span class="fn">title</span>(<span class="str">"Kuikly 3.0"</span>)
+                <span class="fn">feature</span>(
+                    imageSource = <span class="type">SystemIcon</span>(<span class="str">"flame.fill"</span>),
+                    title = <span class="str">"Hot Reload"</span>,
+                    subtitle = <span class="str">"See changes instantly"</span>
+                )
+                <span class="fn">primaryAction</span> {
+                    title = <span class="str">"Get Started"</span>
+                    backgroundColor = <span class="num">0xFF764BA2</span>
+                }
+            }
+        }
+    )
+
+    <span class="kw">override fun</span> <span class="fn">createRenderView</span>() {
+        <span class="kw">super</span>.<span class="fn">createRenderView</span>()
+
+        <span class="kw">val</span> whatsNew = environment.<span class="fn">whatsNew</span>()
+        <span class="kw">if</span> (whatsNew != <span class="kw">null</span>) {
+            <span class="kw">val</span> view = <span class="fn">WhatsNewDslView</span>(
+                whatsNew = whatsNew,
+                onDismiss = { environment.<span class="fn">markAsPresented</span>(whatsNew.version) }
+            )
+            <span class="fn">getRenderView</span>().<span class="fn">addSubView</span>(view)
+        }
+    }
+}`
+};
+
+// ═══════════════ Functions ═══════════════
+let currentVariant = 0;
+
+function selectVariant(idx) {
+  currentVariant = idx;
+  document.querySelectorAll('.variant-card').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+  renderContent();
+}
+
+function renderContent() {
+  const v = variants[currentVariant];
+  const phoneFrame = document.getElementById('phoneFrame');
+
+  // Theme
+  if (v.theme === 'dark') {
+    document.getElementById('phoneWrapper').classList.add('theme-dark');
+  } else {
+    document.getElementById('phoneWrapper').classList.remove('theme-dark');
+  }
+
+  // App content
+  document.getElementById('appTitle').textContent = v.subtitle;
+  document.getElementById('appSubtitle').textContent = "Show What's New" === v.btnText ? 'Tap below to see WhatsNew' : '点击下方查看更新';
+  document.getElementById('showBtn').textContent = v.btnText;
+
+  // Features
+  const contentEl = document.getElementById('wnContent');
+  contentEl.innerHTML = `
+    <div class="wn-title">${v.title}</div>
+    ${v.features.map(f => `
+      <div class="wn-feature">
+        <div class="wn-icon" style="background: ${f.color}1a; color: ${f.color}">${f.icon}</div>
+        <div class="wn-feature-text">
+          <h3>${f.title}</h3>
+          <p>${f.desc}</p>
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  // Buttons
+  const btnEl = document.getElementById('wnButtons');
+  btnEl.innerHTML = '';
+  if (v.secondaryBtn) {
+    btnEl.innerHTML += `<button class="wn-btn-secondary" style="color: ${v.secondaryBtn.color}" onclick="dismissSheet()">${v.secondaryBtn.text}</button>`;
+  }
+  btnEl.innerHTML += `<button class="wn-btn-primary" style="background: ${v.primaryBtn.bg}; color: ${v.primaryBtn.color}" onclick="dismissSheet()">${v.primaryBtn.text}</button>`;
+
+  // Code
+  document.getElementById('codeTitle').textContent = v.codeFile;
+  document.getElementById('codeBody').innerHTML = codeExamples[v.code];
+}
+
+function showSheet() {
+  var overlay = document.getElementById('sheetOverlay');
+  overlay.style.display = 'flex';
+  // Force reflow so transition kicks in
+  void overlay.offsetHeight;
+  overlay.classList.add('visible');
+}
+
+function dismissSheet() {
+  var overlay = document.getElementById('sheetOverlay');
+  overlay.classList.remove('visible');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+  }, 350);
+}
+
+// Close on overlay click
+document.getElementById('sheetOverlay').addEventListener('click', function(e) {
+  if (e.target === e.currentTarget) dismissSheet();
+});
+
+// Wire up button
+document.getElementById('showBtn').addEventListener('click', function() {
+  showSheet();
+});
+
+// Init
+renderContent();
+</script>
+</body>
+</html>

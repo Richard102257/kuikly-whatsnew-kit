@@ -1,0 +1,54 @@
+# Build outputs
+build/
+out/
+*.class
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle
+.gradle/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+.gradletasknamecache
+
+# Kotlin
+*.kotlin_module
+
+# Android
+*.apk
+*.aar
+*.dex
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# iOS
+*.dSYM
+*.ipa
+Pods/
+*.xcworkspace
+*.xcuserdata
+
+# HarmonyOS
+.hvigor/
+.ohos/
+
+# Kuikly
+*.kuikly/
+
+# Local config
+local.properties
+secrets.properties

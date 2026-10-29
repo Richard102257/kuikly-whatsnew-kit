@@ -1,0 +1,10 @@
+{
+  "name": "kuikly-whatsnew-demo",
+  "version": "1.0.0",
+  "description": "Kuikly WhatsNewKit HarmonyOS Demo",
+  "license": "MIT",
+  "dependencies": {
+    "@kuikly/core": "file:../core",
+    "@walkman707/whatsnewOhos": "file:../../whatsnewOhos"
+  }
+}
