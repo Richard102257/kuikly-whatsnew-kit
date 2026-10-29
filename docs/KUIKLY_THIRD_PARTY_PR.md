@@ -1,5 +1,25 @@
 # KuiklyUI-third-party 注册材料
 
+> 一键补丁已生成：[`docs/third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch`](third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch)
+> （在 `KuiklyUI-Libraries.json` 末尾新增 15 行，JSON 校验通过，共 114 个条目）
+
+## 0. 提交步骤
+
+```bash
+# 1. 先在网页上 fork：https://github.com/Tencent-TDS/KuiklyUI-third-party/fork
+git clone https://github.com/<你的账号>/KuiklyUI-third-party.git
+cd KuiklyUI-third-party
+
+# 2. 应用补丁（或按下面第 1 节手动添加）
+git am /path/to/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch
+
+# 3. 推送并开 PR
+git push origin HEAD:add-whatsnew
+```
+
+然后访问 `https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...<你的账号>:KuiklyUI-third-party:add-whatsnew`
+创建 PR，标题与描述见第 2、3 节。
+
 ## 1. 添加到 `KuiklyUI-Libraries.json`
 
 在文件末尾添加：

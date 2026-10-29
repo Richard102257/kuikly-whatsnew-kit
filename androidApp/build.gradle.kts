@@ -17,10 +17,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
     implementation(project(":shared"))
+    // shared 里用的是 implementation(project(":whatsnew"))，不会传递到 app 的编译类路径
+    implementation(project(":whatsnew"))
 
     // Kuikly 依赖
     implementation("com.tencent.kuikly-open:core:2.1.1-2.0.21")

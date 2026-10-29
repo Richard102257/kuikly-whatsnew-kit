@@ -91,6 +91,16 @@ spec.vendored_frameworks = 'WhatsNew.xcframework'
 
 ### 3. 发布到 CocoaPods Trunk
 
+前提：
+
+- GitHub Release 上已存在对应版本的 `WhatsNew.xcframework.zip`（zip 内含 `LICENSE`，
+  podspec 的 `license[:file]` 才能在下载目录里找到）
+- 本机 Xcode **已安装 iOS 平台**（`xcrun simctl list runtimes` 至少有一个 iOS runtime）。
+  只装了 Xcode 但没下平台时，`xcodebuild` 会报
+  `iOS xx.x is not installed. To use with Xcode, first download and install the platform`，
+  `pod spec lint` / `pod trunk push` 都会失败（它们要真正编译并链接一个示例 App）。
+  安装方式：`xcodebuild -downloadPlatform iOS`（约 8.7 GB）。
+
 ```bash
 export PATH="$HOME/.rbenv/versions/3.4.11/bin:$PATH"
 export LANG=en_US.UTF-8
@@ -98,14 +108,17 @@ export LANG=en_US.UTF-8
 # 首次需要注册（已验证邮箱会收到确认链接）
 pod trunk register lhui1022@gmail.com 'Richard'
 
-# 语法检查
+# 快速语法检查（不编译，几秒）
 pod spec lint WhatsNew.podspec --quick --allow-warnings
 
-# 正式发布（会真正下载 XCFramework 并校验）
+# 完整校验（下载 XCFramework + 编译示例 App），建议先跑通再 push
+pod spec lint WhatsNew.podspec --allow-warnings
+
+# 正式发布（同样会做一次完整校验）
 pod trunk push WhatsNew.podspec --allow-warnings
 ```
 
-前提：GitHub Release 上已存在对应版本的 `WhatsNew.xcframework.zip`。
+`pod trunk push` 没有 `--quick` / `--skip-build` 之类的开关，本地校验不通过就无法发布。
 
 ---
 
