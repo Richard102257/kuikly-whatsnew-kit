@@ -57,16 +57,19 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 在 macOS 上构建时 iOS target 自动注册，klib 随 App 一起编译。
 
-**方式 B：CocoaPods 预编译 XCFramework**
+**方式 B：CocoaPods（已发布到 trunk）**
 
 ```ruby
 # Podfile
 pod 'KuiklyWhatsNew', '~> 1.1.1'
 ```
 
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-KuiklyWhatsNew-red)](https://cocoapods.org/pods/KuiklyWhatsNew)
+
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
-`ios-arm64_x86_64-simulator`），由 macOS 上的 `./gradlew :whatsnew:buildXCFramework`
-构建后上传。适合二进制分发 / 非 Kotlin 工程集成。
+`ios-arm64_x86_64-simulator`，静态 framework），由 macOS 上的
+`./gradlew :whatsnew:assembleWhatsNewReleaseXCFramework` 构建后上传。
+framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用而叫 `KuiklyWhatsNew`。
 
 **方式 C：Maven Central（可选，需在 macOS 上发布）**
 
@@ -278,6 +281,7 @@ val whatsNew = WhatsNew(
 | [docs/QUICKSTART.md](docs/QUICKSTART.md) | 5 分钟快速上手 |
 | [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md) | 完整集成教程 |
 | [docs/PUBLISHING.md](docs/PUBLISHING.md) | 发布到 Maven Central / JitPack / CocoaPods |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | 各产物的实际验证记录（编译 / 测试 / 分发 / 第三方接入） |
 | [preview/preview.html](preview/preview.html) | 在线预览页面 |
 
 ---

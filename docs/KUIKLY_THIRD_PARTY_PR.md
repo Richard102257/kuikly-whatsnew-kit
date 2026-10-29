@@ -124,5 +124,5 @@ override fun body(): ViewBuilder = {
 
 - [x] JitPack 上 `1.1.1` 构建成功（`whatsnew-1.1.1.pom` / `whatsnew-android-1.1.1.aar` 可下载）
 - [x] GitHub Release `v1.1.1` 上有 `WhatsNew.xcframework.zip`
-- [ ] `pod spec lint KuiklyWhatsNew.podspec` 通过
+- [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.1.1'`）
 - [x] README 中的版本号与 tag 一致
