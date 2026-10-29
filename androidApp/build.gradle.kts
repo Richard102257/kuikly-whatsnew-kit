@@ -21,7 +21,6 @@ android {
 
 dependencies {
     implementation(project(":shared"))
-    implementation(project(":whatsnewAndroid"))
 
     // Kuikly 依赖
     implementation("com.tencent.kuikly-open:core:2.1.1-2.0.21")

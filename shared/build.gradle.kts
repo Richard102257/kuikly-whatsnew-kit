@@ -23,11 +23,6 @@ kotlin {
                 implementation(project(":whatsnew"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(project(":whatsnewAndroid"))
-            }
-        }
 
         if (isMacOs) {
             val iosX64Main by getting

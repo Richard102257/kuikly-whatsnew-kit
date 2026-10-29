@@ -7,9 +7,9 @@ plugins {
 // ─── 版本配置 ───
 object MavenConfig {
     const val GROUP = "io.github.Richard102257"
-    const val VERSION = "1.0.0"
+    const val VERSION = "1.1.0"
     // 鸿蒙版本加后缀避免 Maven 元数据冲突
-    const val VERSION_OHOS = "1.0.0_ohos"
+    const val VERSION_OHOS = "1.1.0_ohos"
 }
 
 // Kuikly 版本（格式：<Kuikly 版本>-<Kotlin 版本>）
@@ -91,7 +91,18 @@ android {
 // ─── 说明 ───
 // 1. 鸿蒙产物由 build.ohos.gradle.kts 单独构建（需要 Kuikly 的 ohosArm64 Kotlin 目标），
 //    该脚本含 plugins {} 块，不能通过 apply(from=) 复用，使用时替换本文件即可。
-// 2. iOS 产物通过 whatsnewIOS.podspec 发布（CocoaPods），不走 Gradle 发布。
+// 2. iOS 产物由 GitHub Actions 的 macOS runner 构建成 XCFramework，通过 CocoaPods 分发
+//    （podspec 见根目录 WhatsNew.podspec，指向 GitHub Release 上的预编译 zip）。
+
+// ─── iOS XCFramework 构建任务（仅 macOS）───
+// 产物用于 CocoaPods 分发：./gradlew :whatsnew:buildXCFramework
+if (isMacOs) {
+    tasks.register("buildXCFramework") {
+        group = "build"
+        description = "Assemble the WhatsNew XCFramework for CocoaPods distribution"
+        dependsOn(tasks.matching { it.name.contains("XCFramework") })
+    }
+}
 
 // ─── Maven 发布配置 ───
 publishing {

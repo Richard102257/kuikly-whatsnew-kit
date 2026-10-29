@@ -1,0 +1,52 @@
+name: Release iOS XCFramework
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-xcframework:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build XCFramework
+        run: ./gradlew :whatsnew:buildXCFramework --no-daemon --stacktrace
+
+      - name: Locate and zip XCFramework
+        run: |
+          set -e
+          XCF=$(find whatsnew/build -name "WhatsNew.xcframework" -maxdepth 5 -type d | head -1)
+          if [ -z "$XCF" ]; then
+            echo "XCFramework not found; build output:"
+            find whatsnew/build -name "*.xcframework" -o -name "*.framework" | head -20
+            exit 1
+          fi
+          echo "Found: $XCF"
+          mkdir -p out
+          cp -R "$XCF" out/
+          cd out && zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhatsNew.xcframework.zip
+          path: out/WhatsNew.xcframework.zip
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/WhatsNew.xcframework.zip
+          fail_on_unmatched_files: true
