@@ -15,10 +15,10 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 
 ## 📦 安装
 
-### 单一依赖（推荐）
+### 单一依赖（Android，推荐）
 
-库是**纯 Kuikly DSL 组件**（`componentType: KuiklyView`），只依赖一个模块即可在
-Android / iOS / HarmonyOS / Web / 小程序上工作，无需任何平台侧代码。
+库是**纯 Kuikly DSL 组件**（`componentType: KuiklyView`），只有一个模块 `:whatsnew`，
+不需要任何平台侧原生代码。
 
 ```kotlin
 // settings.gradle.kts
@@ -42,25 +42,41 @@ kotlin {
 }
 ```
 
-> Android 端由 JitPack 直接产出 AAR + klib；iOS 端使用 CocoaPods 分发的预编译
-> XCFramework（见下），或直接用 Maven 上的 iOS klib。
+> JitPack 在 Linux 上构建，只能产出 **Android AAR + 公共元数据**。
+> Kotlin/Native 的 iOS klib 必须在 macOS 上编译，所以 iOS 走下面两种方式之一。
 
-### iOS（CocoaPods，预编译 XCFramework）
+### iOS
+
+**方式 A：源码模块（推荐，与 Kuikly 官方示例一致）**
+
+```kotlin
+// settings.gradle.kts
+include(":whatsnew")
+project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
+```
+
+在 macOS 上构建时 iOS target 自动注册，klib 随 App 一起编译。
+
+**方式 B：CocoaPods 预编译 XCFramework**
 
 ```ruby
 # Podfile
 pod 'WhatsNew', '~> 1.1.1'
 ```
 
-podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`，由 GitHub Actions
-在 macOS runner 上构建（Kotlin/Native 的 iOS 产物无法在 Linux 上构建）。
+podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
+`ios-arm64_x86_64-simulator`），由 macOS 上的 `./gradlew :whatsnew:buildXCFramework`
+构建后上传。适合二进制分发 / 非 Kotlin 工程集成。
+
+**方式 C：Maven Central（可选，需在 macOS 上发布）**
+
+在 macOS 上用 Sonatype 凭据执行 `./gradlew :whatsnew:publish`，会把 **iOS klib**
+一起发布，之后 iOS 也能像 Android 一样直接用 Maven 坐标。
 
 ### HarmonyOS
 
-```kotlin
-// 与 Android 相同的 Maven 依赖；鸿蒙侧仅需 expect/actual 提供的版本号与存储实现
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
-```
+鸿蒙 target 需要 Kuikly 的 `ohosArm64` 目标，使用 `whatsnew/build.ohos.gradle.kts`
+在 macOS / 鸿蒙工具链上构建，或同样走源码模块方式引入。
 
 > 📖 详细集成教程请查看 [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md)
 > 🚀 5 分钟快速上手请查看 [docs/QUICKSTART.md](docs/QUICKSTART.md)
@@ -70,7 +86,7 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 ## ✨ Features
 
 - ✅ **One codebase, all platforms** — Android, iOS, HarmonyOS, Web, Mini Programs
-- ✅ **Dual DSL support** — Compose DSL (Jetpack Compose-compatible) and Kuikly Self-developed DSL
+- ✅ **Kuikly DSL + Compose 页面** — `WhatsNewView` 用于 Kuikly DSL；Compose 页面用 `WhatsNewComposeState` 控制展示
 - ✅ **Manual & Automatic presentation** — Full control or let the environment handle it
 - ✅ **Version tracking** — Persistent, in-memory, and iCloud-like storage options
 - ✅ **Patch version fallback** — Automatically falls back to nearest matching version

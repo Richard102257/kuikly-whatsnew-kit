@@ -38,16 +38,36 @@ kotlin {
 }
 ```
 
-### 2. iOS（CocoaPods）
+### 2. iOS
+
+JitPack 在 Linux 上构建，只能产出 Android AAR + 公共元数据；iOS 的 Kotlin/Native
+klib 必须在 macOS 上编译。因此 iOS 有三种引入方式：
+
+**A. 源码模块（推荐）**
+
+```kotlin
+// settings.gradle.kts
+include(":whatsnew")
+project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
+```
+
+在 macOS 上构建时 iOS target 自动注册，klib 随 App 一起编译。
+
+**B. CocoaPods（预编译 XCFramework）**
 
 ```ruby
 # Podfile
 pod 'WhatsNew', '~> 1.1.1'
 ```
 
-CocoaPods 分发的是**预编译 XCFramework**（`WhatsNew.xcframework.zip`，挂在 GitHub Release 上）。
-Kotlin/Native 的 iOS 产物无法在 Linux 上构建，所以它由 macOS 构建后上传，
-podspec 通过 `vendored_frameworks` 引用。
+podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
+`ios-arm64_x86_64-simulator`），由 macOS 上的 `./gradlew :whatsnew:buildXCFramework`
+构建后上传，podspec 通过 `vendored_frameworks` 引用。
+
+**C. Maven Central（可选）**
+
+在 macOS 上用 Sonatype 凭据执行 `./gradlew :whatsnew:publish`，会把 iOS klib
+一并发布，之后 iOS 也能直接用 Maven 坐标。
 
 ### 3. 本地源码（调试 / 二次开发）
 
@@ -187,27 +207,27 @@ override fun createPage(pageName: String): Pager? {
 }
 ```
 
-### 方式 C：Compose DSL 页面
+### 方式 C：Compose 页面
+
+本库提供 `WhatsNewComposeState` 做状态管理（`pendingWhatsNew` / `autoPresent()` /
+`dismiss()`），渲染仍复用 Kuikly DSL 的 `WhatsNewView`：
 
 ```kotlin
 import io.github.Richard102257.whatsnew.*
 
-@Composable
-fun MyScreen() {
-    val state = remember { WhatsNewComposeState(environment) }
+val state = remember { WhatsNewComposeState(environment) }
 
-    Column(Modifier.fillMaxSize()) {
-        Button(onClick = { state.autoPresent() }) { Text("查看更新") }
-    }
+// 任意触发点
+Button(onClick = { state.autoPresent() }) { Text("查看更新") }
 
-    state.pendingWhatsNew?.let { pending ->
-        // 用任意容器承载 WhatsNewView（例如 Kuikly 的 Compose 互操作节点）
-        WhatsNewView().apply {
-            setup(pending) { state.dismiss() }
-        }
-    }
+// 展示（用你工程里承载 Kuikly 视图的方式挂载 WhatsNewView）
+state.pendingWhatsNew?.let { pending ->
+    whatsNewViewNode(pending) { state.dismiss() }
 }
 ```
+
+> 完整的 `@Composable` 包装需要额外依赖 `com.tencent.kuikly-open:compose`，
+> 当前版本未引入，避免给只用 Kuikly DSL 的工程增加依赖。
 
 ---
 
