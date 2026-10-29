@@ -2,4 +2,4 @@ jdk:
   - openjdk17
 
 install:
-  - ./gradlew :whatsnew:publishToMavenLocal :whatsnewAndroid:publishToMavenLocal -x test --no-daemon
+  - ./gradlew :whatsnew:publishToMavenLocal -x test --no-daemon
