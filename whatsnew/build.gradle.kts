@@ -97,7 +97,7 @@ android {
 // 1. 鸿蒙产物由 build.ohos.gradle.kts 单独构建（需要 Kuikly 的 ohosArm64 Kotlin 目标），
 //    该脚本含 plugins {} 块，不能通过 apply(from=) 复用，使用时替换本文件即可。
 // 2. iOS 产物由 GitHub Actions 的 macOS runner 构建成 XCFramework，通过 CocoaPods 分发
-//    （podspec 见根目录 WhatsNew.podspec，指向 GitHub Release 上的预编译 zip）。
+//    （podspec 见根目录 KuiklyWhatsNew.podspec，指向 GitHub Release 上的预编译 zip）。
 
 // ─── iOS XCFramework 构建任务（仅 macOS）───
 // 产物用于 CocoaPods 分发：./gradlew :whatsnew:assembleWhatsNewXCFramework

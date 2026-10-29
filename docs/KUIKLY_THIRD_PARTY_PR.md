@@ -82,7 +82,7 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 iOS 也可通过 CocoaPods 引入预编译 XCFramework：
 
 ```ruby
-pod 'WhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.1.1'
 ```
 
 > iOS 的 Kotlin/Native klib 只能在 macOS 上编译，所以 iOS 推荐把 `whatsnew`
@@ -116,7 +116,7 @@ override fun body(): ViewBuilder = {
 
 ### 平台支持
 - Android：JitPack AAR（`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1`）
-- iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'WhatsNew'`）
+- iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'KuiklyWhatsNew'`）
 - HarmonyOS：同一份 Kuikly DSL 代码
 ```
 
@@ -124,5 +124,5 @@ override fun body(): ViewBuilder = {
 
 - [x] JitPack 上 `1.1.1` 构建成功（`whatsnew-1.1.1.pom` / `whatsnew-android-1.1.1.aar` 可下载）
 - [x] GitHub Release `v1.1.1` 上有 `WhatsNew.xcframework.zip`
-- [ ] `pod spec lint WhatsNew.podspec` 通过
+- [ ] `pod spec lint KuiklyWhatsNew.podspec` 通过
 - [x] README 中的版本号与 tag 一致

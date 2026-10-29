@@ -1,5 +1,5 @@
 Pod::Spec.new do |spec|
-  spec.name             = "WhatsNew"
+  spec.name             = "KuiklyWhatsNew"
   spec.version          = "1.1.1"
   spec.summary          = "Cross-platform What's New component for KuiklyUI"
   spec.description      = <<-DESC

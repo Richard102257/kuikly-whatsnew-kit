@@ -27,7 +27,7 @@ kotlin {
 iOS（CocoaPods）：
 
 ```ruby
-pod 'WhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.1.1'
 ```
 
 > 只有一个模块，Android / iOS / HarmonyOS / Web / 小程序通用。

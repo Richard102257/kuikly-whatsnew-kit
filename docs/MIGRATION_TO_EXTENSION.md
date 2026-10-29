@@ -51,7 +51,7 @@ expect fun createPersistentWhatsNewVersionStore(): WhatsNewVersionStore
 |------|------|
 | 依赖 | 从 2~3 个坐标收敛为 1 个：`...:whatsnew:<version>` |
 | Android | JitPack 直接产出 AAR + klib |
-| iOS | 预编译 XCFramework（`WhatsNew.podspec`），macOS 构建 |
+| iOS | 预编译 XCFramework（`KuiklyWhatsNew.podspec`），macOS 构建 |
 | HarmonyOS | 同一份 klib，无需额外模块 |
 | Web / 小程序 | 同一份 DSL 代码，无需额外模块 |
 

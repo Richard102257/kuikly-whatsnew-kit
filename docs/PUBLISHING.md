@@ -80,7 +80,7 @@ gh release create v1.1.1 WhatsNew.xcframework.zip \
 
 ### 2. podspec
 
-`WhatsNew.podspec` 使用预编译产物：
+`KuiklyWhatsNew.podspec` 使用预编译产物：
 
 ```ruby
 spec.source = {
@@ -91,6 +91,11 @@ spec.vendored_frameworks = 'WhatsNew.xcframework'
 
 > 注意：**不能**把 `.kt` 源码放进 `source_files`。CocoaPods / Xcode 不编译 Kotlin，
 > 必须分发 Kotlin/Native 编译出的 framework。
+
+> pod 名为什么是 `KuiklyWhatsNew` 而不是 `WhatsNew`：trunk 上 `WhatsNew` 已被其他作者
+> 占用（`pod trunk push WhatsNew.podspec` 会返回 *not allowed to push new versions for
+> this pod*）。pod 名与 framework 名（`WhatsNew.framework`）互不影响，代码里的
+> `import WhatsNew` / `import io.github.Richard102257.whatsnew.*` 不变。
 
 ### 3. 发布到 CocoaPods Trunk
 
@@ -112,13 +117,13 @@ export LANG=en_US.UTF-8
 pod trunk register lhui1022@gmail.com 'Richard'
 
 # 快速语法检查（不编译，几秒）
-pod spec lint WhatsNew.podspec --quick --allow-warnings
+pod spec lint KuiklyWhatsNew.podspec --quick --allow-warnings
 
 # 完整校验（下载 XCFramework + 编译示例 App），建议先跑通再 push
-pod spec lint WhatsNew.podspec --allow-warnings
+pod spec lint KuiklyWhatsNew.podspec --allow-warnings
 
 # 正式发布（同样会做一次完整校验）
-pod trunk push WhatsNew.podspec --allow-warnings
+pod trunk push KuiklyWhatsNew.podspec --allow-warnings
 ```
 
 `pod trunk push` 没有 `--quick` / `--skip-build` 之类的开关，本地校验不通过就无法发布。
@@ -147,7 +152,7 @@ git checkout whatsnew/build.gradle.kts
 |------|------|
 | `gradle.properties` | `VERSION=` |
 | `whatsnew/build.gradle.kts` | `MavenConfig.VERSION` / `VERSION_OHOS` |
-| `WhatsNew.podspec` | `spec.version` |
+| `KuiklyWhatsNew.podspec` | `spec.version` |
 | `docs/KUIKLY_THIRD_PARTY_PR.md` | 示例版本号 |
 
 ---
@@ -157,6 +162,6 @@ git checkout whatsnew/build.gradle.kts
 - [ ] `./gradlew :whatsnew:assembleRelease` 通过
 - [ ] JitPack 上 `vX.Y.Z` 构建成功（绿色）
 - [ ] GitHub Release 上有 `WhatsNew.xcframework.zip`
-- [ ] `pod spec lint WhatsNew.podspec` 通过
+- [ ] `pod spec lint KuiklyWhatsNew.podspec` 通过
 - [ ] `pod trunk push` 成功，`pod search WhatsNew` 可查到
 - [ ] 更新 `docs/KUIKLY_THIRD_PARTY_PR.md` 并向 KuiklyUI-third-party 提交 PR

@@ -61,7 +61,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'WhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.1.1'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
@@ -111,7 +111,7 @@ kuikly-whatsnew-kit/
 │       ├── iosMain/          # NSBundle + NSUserDefaults
 │       └── ohosArm64Main/    # 鸿蒙 Preferences
 │
-├── WhatsNew.podspec          # iOS 分发（预编译 XCFramework）
+├── KuiklyWhatsNew.podspec          # iOS 分发（预编译 XCFramework）
 ├── androidApp/ + shared/     # Android Demo
 ├── iosApp/ ohosApp/ h5App/ miniApp/  # 其他平台 Demo 工程
 ├── docs/                     # 文档（CI 工作流模板在 docs/ci/）

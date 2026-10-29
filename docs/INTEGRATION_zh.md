@@ -57,7 +57,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'WhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.1.1'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +

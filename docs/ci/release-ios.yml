@@ -22,12 +22,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build XCFramework
-        run: ./gradlew :whatsnew:buildXCFramework --no-daemon --stacktrace
+        run: ./gradlew :whatsnew:assembleWhatsNewReleaseXCFramework --no-daemon --stacktrace
 
       - name: Locate and zip XCFramework
         run: |
           set -e
-          XCF=$(find whatsnew/build -maxdepth 5 -name "WhatsNew.xcframework" -type d | head -1)
+          XCF=$(find whatsnew/build/XCFrameworks -maxdepth 3 -name "WhatsNew.xcframework" -type d | head -1)
           if [ -z "$XCF" ]; then
             echo "XCFramework not found; build output:"
             find whatsnew/build -name "*.xcframework" | head -20
@@ -36,7 +36,9 @@ jobs:
           echo "Found: $XCF"
           mkdir -p out
           cp -R "$XCF" out/
-          cd out && zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework
+          # podspec 的 license[:file] 需要在下载目录里找到 LICENSE
+          cp LICENSE out/
+          cd out && zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework LICENSE
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
