@@ -177,20 +177,33 @@ val whatsNew = whatsNew {
 
 ### 3. Kuikly DSL Usage
 
+`WhatsNewView` 是一个普通的 `ViewContainer`，在任何 `body(): ViewBuilder` 里 `addChild` 即可：
+
 ```kotlin
 import io.github.Richard102257.whatsnew.*
-import com.tencent.kuikly.core.views.DivView
+import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.pager.Pager
 
 class MyPager : Pager() {
-    override fun createRenderView() {
-        super.createRenderView()
-
-        val whatsNewView = WhatsNewView()
-        whatsNewView.setup(whatsNew, onDismiss = { /* handle dismiss */ })
-
-        getRenderView().addSubView(whatsNewView)
+    override fun body(): ViewBuilder = {
+        addChild(WhatsNewView()) {
+            setup(whatsNew) {
+                // 用户点击主按钮 / 关闭
+            }
+        }
     }
 }
+```
+
+也可以直接使用内置页面（自带「无新版本」占位内容）：
+
+```kotlin
+// 方式 A：直接创建
+val page = WhatsNewPage(environment)
+
+// 方式 B：设置一次全局环境，之后按名字路由打开
+defaultWhatsNewEnvironment = environment
+router.openPage("WhatsNewPage")
 ```
 
 ### 4. Automatic Presentation
