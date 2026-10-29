@@ -57,8 +57,19 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 在 macOS 上：
 
 ```bash
-./gradlew :whatsnew:buildXCFramework
-# 产物：whatsnew/build/xcframework/WhatsNew.xcframework
+./gradlew :whatsnew:assembleWhatsNewXCFramework
+# 产物：whatsnew/build/XCFrameworks/release/WhatsNew.xcframework
+# 或简写：./gradlew :whatsnew:buildXCFramework
+```
+
+打包并上传到 GitHub Release：
+
+```bash
+cd whatsnew/build/XCFrameworks/release
+zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework
+
+gh release create v1.1.1 WhatsNew.xcframework.zip \
+  --title "v1.1.1" --notes "WhatsNew 1.1.1"
 ```
 
 或由 CI 自动完成（`.github/workflows/release-ios.yml`，模板见 `docs/ci/release-ios.yml`）：

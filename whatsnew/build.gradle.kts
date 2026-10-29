@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFrameworkConfig
+
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
@@ -32,8 +34,8 @@ kotlin {
 
     // ─── iOS（仅 macOS 可构建）───
     if (isMacOs) {
-        // XCFramework 聚合产物（CocoaPods 分发用）：./gradlew :whatsnew:assembleWhatsNewXCFramework
-        val whatsNewXcf = XCFramework("WhatsNew")
+        // XCFramework 聚合产物（CocoaPods 分发用）
+        val whatsNewXcf = XCFrameworkConfig(project, "WhatsNew")
         listOf(
             iosX64(),
             iosArm64(),
