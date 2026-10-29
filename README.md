@@ -15,7 +15,10 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 
 ## 📦 安装
 
-### JitPack（推荐）
+### 单一依赖（推荐）
+
+库是**纯 Kuikly DSL 组件**（`componentType: KuiklyView`），只依赖一个模块即可在
+Android / iOS / HarmonyOS / Web / 小程序上工作，无需任何平台侧代码。
 
 ```kotlin
 // settings.gradle.kts
@@ -32,41 +35,31 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // KMP 跨端模块（必须）
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.0.0")
-            }
-        }
-        val androidMain by getting {
-            dependencies {
-                // Android 平台侧实现
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnewAndroid:1.0.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
             }
         }
     }
 }
 ```
 
-### iOS（CocoaPods）
+> Android 端由 JitPack 直接产出 AAR + klib；iOS 端使用 CocoaPods 分发的预编译
+> XCFramework（见下），或直接用 Maven 上的 iOS klib。
+
+### iOS（CocoaPods，预编译 XCFramework）
 
 ```ruby
 # Podfile
-pod 'WhatsNew', '~> 1.0.0'          # KMP 跨端 Framework
-pod 'whatsnewIOS', '~> 1.0.0'       # iOS 平台侧原生实现
+pod 'WhatsNew', '~> 1.1.0'
 ```
+
+podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`，由 GitHub Actions
+在 macOS runner 上构建（Kotlin/Native 的 iOS 产物无法在 Linux 上构建）。
 
 ### HarmonyOS
 
 ```kotlin
-kotlin {
-    sourceSets {
-        val ohosArm64Main by getting {
-            dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.0.0")
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnewOhos:1.0.0_ohos")
-            }
-        }
-    }
-}
+// 与 Android 相同的 Maven 依赖；鸿蒙侧仅需 expect/actual 提供的版本号与存储实现
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
 ```
 
 > 📖 详细集成教程请查看 [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md)
@@ -93,43 +86,24 @@ kotlin {
 
 ```
 kuikly-whatsnew-kit/
-├── whatsnew/              # KMP 跨端模块（Android/iOS/Ohos/Web）
-│   ├── build.gradle.kts   # 主构建脚本（Android + iOS + Ohos）
-│   ├── build.ohos.gradle.kts  # 鸿蒙独立构建
+├── whatsnew/                 # 唯一的库模块（KMP，纯 Kuikly DSL）
+│   ├── build.gradle.kts      # Android + iOS 目标（iOS 仅 macOS）
+│   ├── build.ohos.gradle.kts # 鸿蒙独立构建脚本
 │   └── src/
-│       ├── commonMain/    # 跨端接口 + 数据模型
-│       ├── androidMain/   # Android 平台实现
-│       ├── iosMain/       # iOS 平台实现
-│       └── ohosArm64Main/ # 鸿蒙平台实现
+│       ├── commonMain/       # 数据模型 + DSL View + 版本匹配逻辑
+│       ├── androidMain/      # 版本号 + SharedPreferences
+│       ├── iosMain/          # NSBundle + NSUserDefaults
+│       └── ohosArm64Main/    # 鸿蒙 Preferences
 │
-├── whatsnewAndroid/       # Android 平台侧独立模块（AAR 产物）
-├── whatsnewIOS/           # iOS 平台侧独立模块 + podspec
-├── whatsnewOhos/          # 鸿蒙平台侧独立模块（SO 产物）
-│
-├── androidApp/            # Android Demo 工程
-├── iosApp/                # iOS Demo 工程
-├── ohosApp/               # 鸿蒙 Demo 工程
-├── h5App/                 # Web Demo
-├── miniApp/               # 小程序 Demo
-├── shared/                # Demo 共享模块
-│
-├── docs/                  # 文档
-├── preview/               # 在线预览
-└── .github/               # CI/CD + PR 模板
+├── WhatsNew.podspec          # iOS 分发（预编译 XCFramework）
+├── androidApp/ + shared/     # Android Demo
+├── iosApp/ ohosApp/ h5App/ miniApp/  # 其他平台 Demo 工程
+├── docs/                     # 文档（CI 工作流模板在 docs/ci/）
+└── preview/                  # 在线预览
 ```
 
-### Module Dependencies
-
-```
-whatsnew (KMP 跨端)
-├── whatsnewAndroid (Android 平台侧) ← 用户按需引入
-├── whatsnewIOS (iOS 平台侧) ← 用户通过 CocoaPods 引入
-├── whatsnewOhos (鸿蒙平台侧) ← 用户按需引入
-│
-androidApp → whatsnew + whatsnewAndroid
-iosApp → whatsnew + whatsnewIOS
-ohosApp → whatsnew + whatsnewOhos
-```
+平台差异只有两件事：**读取 App 版本号** 和 **持久化已展示版本**，
+通过 `expect/actual` 实现，每个平台约 25 行。
 
 ---
 
@@ -143,12 +117,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("io.github.Richard102257:whatsnew:1.0.0")
-            }
-        }
-        val androidMain by getting {
-            dependencies {
-                implementation("io.github.Richard102257:whatsnewAndroid:1.0.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
             }
         }
     }

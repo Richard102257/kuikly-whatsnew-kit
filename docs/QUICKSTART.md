@@ -1,187 +1,172 @@
-# Quick Start - 5 Minutes
+# 5 分钟快速上手
 
-## 🚀 最快集成（Maven 依赖）
-
-### 1. 添加依赖（1 分钟）
+## 1. 添加依赖
 
 ```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
 // build.gradle.kts
 kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("io.github.Richard102257.whatsnew:core:1.0.0")
-                implementation("io.github.Richard102257.whatsnew:compose:1.0.0")  // 或 dsl
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
             }
         }
     }
 }
 ```
 
-### 2. 定义内容（1 分钟）
+iOS（CocoaPods）：
+
+```ruby
+pod 'WhatsNew', '~> 1.1.0'
+```
+
+> 只有一个模块，Android / iOS / HarmonyOS / Web / 小程序通用。
+
+---
+
+## 2. 定义 WhatsNew 内容
 
 ```kotlin
+import io.github.Richard102257.whatsnew.*
+
 val whatsNew = whatsNew {
-    version("2.0.0")
-    title("What's New")
+    version("2.0.0")                       // 对应 App 的 versionName
+    title("What's New in v2.0")
+
     feature(
-        imageSource = WhatsNew.ImageSource.SystemIcon("star.fill"),
-        title = "New Feature",
-        subtitle = "Check this out!"
+        icon = WhatsNewIcon.SystemIcon("star.fill"),
+        title = "AI-Powered Development",
+        subtitle = "Generate boilerplate with a single prompt."
     )
+    feature(
+        icon = WhatsNewIcon.SystemIcon("bolt.fill"),
+        title = "Lightning Fast",
+        subtitle = "Native rendering keeps 60fps everywhere."
+    )
+
     primaryAction {
         title = "Continue"
         backgroundColor = 0xFF6200EE
         foregroundColor = 0xFFFFFFFF
     }
+
+    secondaryAction {
+        title = "Learn More"
+        openURL("https://github.com/Richard102257/kuikly-whatsnew-kit")
+    }
 }
 ```
 
-### 3. 展示（1 分钟）
+多个版本可以一起定义，环境会自动挑出「当前版本该展示的那一个」：
 
-**Compose DSL:**
 ```kotlin
-WhatsNewDialog(whatsNew = whatsNew, onDismiss = { })
+val collection = whatsNewCollection {
+    whatsNew("1.0.0") { /* ... */ }
+    whatsNew("2.0.0") { /* ... */ }
+    whatsNew("2.1.0") { /* ... */ }
+}
 ```
-
-**Kuikly DSL:**
-```kotlin
-getRenderView().addSubView(WhatsNewDslView(whatsNew = whatsNew))
-```
-
-### 4. 完成！🎉
 
 ---
 
-## 📦 安装方式速查
+## 3. 在 Kuikly DSL 页面中使用
 
-| 方式 | 依赖格式 | 难度 |
-|------|----------|------|
-| Maven Central | `io.github.Richard102257.whatsnew:core:1.0.0` | ⭐ |
-| JitPack | `com.github.org:core:1.0.0` | ⭐ |
-| 源码集成 | 复制源码到项目 | ⭐⭐ |
-| Git Submodule | `git submodule add` | ⭐⭐ |
+```kotlin
+class MyPage : Pager() {
+    private val environment = WhatsNewEnvironment(
+        versionStore = createPersistentWhatsNewVersionStore(),
+        whatsNewCollection = collection
+    )
+
+    override fun body(): ViewBuilder = {
+        addChild(WhatsNewView()) {
+            setup(environment.whatsNew()) {
+                // 用户点了「Continue」之后的回调
+            }
+        }
+    }
+}
+```
 
 ---
 
-## 📋 API 速查
+## 4. 自动展示（推荐）
 
-### 创建 WhatsNew
+```kotlin
+val environment = WhatsNewEnvironment(
+    versionStore = createPersistentWhatsNewVersionStore(),
+    whatsNewCollection = collection
+)
+
+// 有新版本时返回内容，否则返回 null
+val pending = environment.whatsNew()
+if (pending != null) {
+    showWhatsNew(pending) {
+        environment.markAsPresented(pending.version)
+    }
+}
+```
+
+`WhatsNewEnvironment.whatsNew()` 的匹配顺序：
+
+1. **精确匹配** 当前版本
+2. **patch 回退**：`2.1.3` 找不到时回退到 `2.1.0`
+3. **最新未展示版本**：取 `<= 当前版本` 里最新的、还没展示过的
+
+已展示过的版本会被持久化（Android: `SharedPreferences`，iOS: `NSUserDefaults`，
+鸿蒙: `Preferences`），不会重复弹出。
+
+---
+
+## 5. 平台初始化
+
+**Android**：在 `Application` 中初始化一次，供版本号读取和存储使用：
+
+```kotlin
+class MyApp : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        initKuiklyWhatsNew(this)
+    }
+}
+```
+
+**iOS / HarmonyOS**：无需初始化，直接使用 `NSBundle` / `BundleManager`。
+
+---
+
+## 6. 自定义布局
 
 ```kotlin
 whatsNew {
-    version("2.0.0")                    // 版本号
-    title("What's New")                 // 标题
-
-    feature(                            // 功能项
-        imageSource = SystemIcon("star.fill"),
-        title = "Title",
-        subtitle = "Description"
-    )
-
-    primaryAction {                     // 主按钮
-        title = "Continue"
-        backgroundColor = 0xFF6200EE
-        foregroundColor = 0xFFFFFFFF
-        cornerRadius = 12f
-    }
-
-    secondaryAction {                   // 次按钮（可选）
-        title = "Learn More"
-        foregroundColor = 0xFF6200EE
-        openURL("https://example.com")
-        // 或 custom { /* 自定义 */ }
-    }
-
-    layout {                            // 布局（可选）
+    version("2.0.0")
+    layout {
         copy(
-            featureListSpacing = 24f,
-            titleBottomSpacing = 40f
+            contentPadding = PaddingValues(top = 48f, start = 24f, bottom = 24f, end = 24f),
+            titleBottomSpacing = 32f,
+            featureListSpacing = 20f,
+            footerActionSpacing = 16f,
+            primaryButtonHeight = 52f,
+            secondaryButtonHeight = 48f
         )
     }
 }
 ```
 
-### 版本管理
-
-```kotlin
-// 创建集合
-val collection = whatsNewCollection {
-    whatsNew("1.0.0") { /* ... */ }
-    whatsNew("2.0.0") { /* ... */ }
-}
-
-// 创建环境
-val env = WhatsNewEnvironment(
-    versionStore = createPersistentWhatsNewVersionStore(),
-    whatsNewCollection = collection
-)
-
-// 获取当前需要展示的 WhatsNew
-val toShow: WhatsNew? = env.whatsNew()
-
-// 标记已展示
-env.markAsPresented(version)
-```
-
-### 展示方式
-
-```kotlin
-// Compose: 弹窗
-WhatsNewDialog(whatsNew = wn, onDismiss = { })
-
-// Compose: 全屏
-WhatsNewFullScreen(whatsNew = wn, onDismiss = { })
-
-// Compose: 自动
-WhatsNewComposeProvider(environment = env) { Content() }
-
-// DSL: 视图
-getRenderView().addSubView(WhatsNewDslView(whatsNew = wn))
-```
-
-### 图标名称对照
-
-| SF Symbol | 本系统图标名 |
-|-----------|-------------|
-| star.fill | star.fill |
-| heart.fill | heart.fill |
-| bolt.fill | bolt.fill |
-| globe | globe |
-| sparkles | wand.and.stars |
-| paintbrush.fill | paintbrush.fill |
-| bell.fill | bell.fill |
-| gear | gear |
-| lock.fill | lock.fill |
-| camera.fill | camera.fill |
-| map.fill | map.fill |
-| message.fill | message.fill |
-
 ---
 
-## 🔧 平台特定初始化
+## 下一步
 
-### Android
-
-```kotlin
-// Application.onCreate()
-initKuiklyWhatsNew(context)
-
-// 获取持久化存储
-val store = createPersistentWhatsNewVersionStore()
-```
-
-### iOS
-
-```kotlin
-// 无需额外初始化
-// 使用 createPersistentWhatsNewVersionStore() 即可
-```
-
----
-
-## 📚 更多文档
-
-- 完整集成教程: [INTEGRATION_zh.md](INTEGRATION_zh.md)
-- 发布指南: [PUBLISHING.md](PUBLISHING.md)
-- 示例代码: [example/](../example/)
+- 完整集成说明：[INTEGRATION_zh.md](INTEGRATION_zh.md)
+- 发布流程：[PUBLISHING.md](PUBLISHING.md)
+- 常见问题：[FAQ.md](FAQ.md)
