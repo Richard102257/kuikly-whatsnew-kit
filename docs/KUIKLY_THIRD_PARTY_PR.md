@@ -1,15 +1,15 @@
-# KuiklyUI-third-party 注册 PR 信息
+# KuiklyUI-third-party 注册材料
 
-## 需要添加到 KuiklyUI-Libraries.json 的内容
+## 1. 添加到 `KuiklyUI-Libraries.json`
 
-在文件末尾添加以下 JSON 条目：
+在文件末尾添加：
 
 ```json
 {
   "githubUrl": "https://github.com/Richard102257/kuikly-whatsnew-kit",
   "examples": [],
-  "componentName": "WhatsNewKit",
-  "componentDescription": "A cross-platform WhatsNew library for KuiklyUI, inspired by SvenTiigi/WhatsNewKit. Supports automatic/manual presentation, version tracking, customizable layout with primary/secondary actions.",
+  "componentName": "WhatsNew",
+  "componentDescription": "A cross-platform \"What's New\" component for KuiklyUI, inspired by SvenTiigi/WhatsNewKit. Pure Kuikly DSL: automatic/manual presentation, version tracking, patch-version fallback, customizable layout, primary and secondary actions.",
   "componentType": "KuiklyView",
   "developer": "Richard102257",
   "Android": true,
@@ -23,70 +23,86 @@
 }
 ```
 
-## PR 标题
-Add WhatsNewKit to KuiklyUI-Libraries.json
+> 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码，
+> 因此 Android / iOS / Ohos 均为 true，且同一份产物通用。
+> `Js` 暂为 false（未声明 js target）。
 
-## PR 描述
+## 2. PR 标题
+
+```
+Add WhatsNew to KuiklyUI-Libraries.json
+```
+
+## 3. PR 描述
+
 ```markdown
-## WhatsNewKit - Cross-platform What's New component for KuiklyUI
+## WhatsNew — cross-platform "What's New" component for KuiklyUI
 
-### Features
-- ✅ Automatic version detection and presentation
-- ✅ Manual presentation with customizable content
-- ✅ Version tracking with persistent storage
-- ✅ Patch version fallback support
-- ✅ Customizable layout (spacing, button height, padding)
-- ✅ Primary and secondary actions with URL opening
-- ✅ Kuikly DSL and Compose DSL support
+### 功能
+- 自动 / 手动展示
+- 版本追踪 + 持久化（不会重复弹出）
+- patch 版本回退（2.1.3 找不到时回退到 2.1.0）
+- 最新未展示版本自动匹配
+- 可自定义布局（内边距、间距、按钮高度）
+- 主按钮 / 次按钮（支持打开 URL、自定义回调）
+- 纯 Kuikly DSL 实现，无平台侧原生代码
 
-### Platforms
-- Android (via JitPack)
-- iOS (via CocoaPods)
-- Ohos (via Maven Central)
+### 引入方式
 
-### Installation
 ```kotlin
 // settings.gradle.kts
 dependencyResolutionManagement {
     repositories {
-        maven { url = uri("https://jitpack.io") }
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
-// build.gradle.kts (commonMain)
-implementation("com.github.Richard102257:kuikly-whatsnew-kit:1.0.3")
+// build.gradle.kts
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
 ```
 
-iOS (CocoaPods):
+iOS 也可通过 CocoaPods 引入预编译 XCFramework：
+
 ```ruby
-pod 'whatsnewIOS', '~> 1.0.0'
+pod 'WhatsNew', '~> 1.1.0'
 ```
 
-### Usage
-```kotlin
-// Create environment
-val env = WhatsNewEnvironment()
+### 使用示例
 
-// Define WhatsNew content
-val whatsNew = whatsNew {
-    version("2.0.0")
-    title("What's New")
-    feature(
-        icon = WhatsNewIcon.SystemIcon("star.fill"),
-        title = "Amazing Feature",
-        subtitle = "This is a great new feature."
-    )
-    primaryAction {
-        title = "Continue"
+```kotlin
+val environment = WhatsNewEnvironment(
+    versionStore = createPersistentWhatsNewVersionStore(),
+    whatsNewCollection = whatsNewCollection {
+        whatsNew("2.0.0") {
+            title("What's New in v2.0")
+            feature(
+                icon = WhatsNewIcon.SystemIcon("star.fill"),
+                title = "AI-Powered Development",
+                subtitle = "Generate boilerplate with a single prompt."
+            )
+            primaryAction { title = "Continue" }
+        }
+    }
+)
+
+// 在 Kuikly DSL 页面中
+override fun body(): ViewBuilder = {
+    addChild(WhatsNewView()) {
+        setup(environment.whatsNew())
     }
 }
-
-// Auto-present
-env.presentWhatsNewIfNecessary(whatsNew) { /* dismissed */ }
-```
 ```
 
-## 注意事项
-- examples 数组暂时为空，等 Demo 工程完善后补充
-- 需要等 JitPack 构建成功后再提交 PR
+### 平台支持
+- Android：JitPack AAR
+- iOS：CocoaPods 预编译 XCFramework（GitHub Actions 在 macOS 构建）
+- HarmonyOS：KMP klib
+```
+
+## 4. 提交前检查
+
+- [ ] JitPack 上 `v1.1.0` 构建成功
+- [ ] GitHub Release 上有 `WhatsNew.xcframework.zip`
+- [ ] `pod spec lint WhatsNew.podspec` 通过
+- [ ] README 中的版本号与 tag 一致

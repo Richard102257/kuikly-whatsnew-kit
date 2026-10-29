@@ -42,12 +42,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // 核心模块（必须）
-                implementation("io.github.Richard102257.whatsnew:core:1.0.0")
-
-                // 选择你需要的 UI 实现（二选一或都要）
-                implementation("io.github.Richard102257.whatsnew:compose:1.0.0")  // Compose DSL
-                implementation("io.github.Richard102257.whatsnew:dsl:1.0.0")      // Kuikly DSL
+                // 唯一模块：纯 Kuikly DSL 组件，全平台通用
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
             }
         }
     }
@@ -87,19 +83,14 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // 核心模块
-                implementation("com.github.your-org.kuikly-whatsnew-kit:core:1.0.0")
-                // Compose DSL
-                implementation("com.github.your-org.kuikly-whatsnew-kit:compose:1.0.0")
-                // Kuikly DSL
-                implementation("com.github.your-org.kuikly-whatsnew-kit:dsl:1.0.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.0")
             }
         }
     }
 }
 ```
 
-> 💡 将 `your-org` 替换为实际的 GitHub 组织/用户名，`1.0.0` 替换为发布的 tag 版本号。
+> 💡 `1.1.0` 替换为实际发布的 tag 版本号。
 
 ---
 
