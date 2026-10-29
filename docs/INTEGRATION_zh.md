@@ -1,68 +1,20 @@
-# Kuikly WhatsNewKit 集成教程
+# 集成指南（中文）
 
-> 从零开始，5 分钟集成 Kuikly WhatsNewKit 到你的跨端项目
+本库是 **纯 Kuikly DSL 组件**（`componentType: KuiklyView`），只有一个模块 `:whatsnew`。
+Android / iOS / HarmonyOS / Web / 小程序共用同一份代码，不需要任何平台侧原生实现。
 
----
+平台差异只有两件事，通过 `expect/actual` 提供，每个平台约 25 行：
 
-## 📋 目录
-
-- [方式一：Maven 依赖（推荐）](#方式一maven-依赖推荐)
-- [方式二：JitPack](#方式二jitpack)
-- [方式三：源码集成](#方式三源码集成)
-- [方式四：Git Submodule](#方式四git-submodule)
-- [Compose DSL 完整教程](#compose-dsl-完整教程)
-- [Kuikly DSL 完整教程](#kuikly-dsl-完整教程)
-- [常见问题](#常见问题)
+| 能力 | Android | iOS | HarmonyOS |
+|------|---------|-----|-----------|
+| 读取 App 版本号 | `PackageManager` | `NSBundle` | `BundleManager` |
+| 持久化已展示版本 | `SharedPreferences` | `NSUserDefaults` | `Preferences` |
 
 ---
 
-## 方式一：Maven 依赖（推荐）
+## 一、安装
 
-### 步骤 1：添加仓库
-
-在项目根目录 `settings.gradle.kts` 中确保有 Maven Central：
-
-```kotlin
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        // 如果发布到 JitPack，添加：
-        // maven { url = uri("https://jitpack.io") }
-    }
-}
-```
-
-### 步骤 2：添加依赖
-
-在共享模块的 `build.gradle.kts` 中：
-
-```kotlin
-kotlin {
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                // 唯一模块：纯 Kuikly DSL 组件，全平台通用
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
-            }
-        }
-    }
-}
-```
-
-### 步骤 3：同步项目
-
-```bash
-./gradlew sync
-```
-
----
-
-## 方式二：JitPack
-
-适合快速体验，无需注册 Maven Central 账号。
-
-### 步骤 1：添加 JitPack 仓库
+### 1. JitPack（Android / 公共元数据，推荐）
 
 ```kotlin
 // settings.gradle.kts
@@ -73,12 +25,8 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
-```
 
-### 步骤 2：添加依赖
-
-```kotlin
-// build.gradle.kts
+// build.gradle.kts（你的 KMP / Kuikly 共享模块）
 kotlin {
     sourceSets {
         val commonMain by getting {
@@ -90,536 +38,320 @@ kotlin {
 }
 ```
 
-> 💡 `1.1.1` 替换为实际发布的 tag 版本号。
+### 2. iOS（CocoaPods）
 
----
-
-## 方式三：源码集成
-
-适合需要深度定制或调试源码的场景。
-
-### 步骤 1：复制源码
-
-将以下目录复制到你的项目中：
-
-```
-你的项目/
-├── kuikly-whatsnew/
-│   ├── core/src/commonMain/     → 核心模块源码
-│   ├── compose/src/commonMain/  → Compose DSL 源码
-│   └── dsl/src/commonMain/      → Kuikly DSL 源码
+```ruby
+# Podfile
+pod 'WhatsNew', '~> 1.1.1'
 ```
 
-### 步骤 2：配置 Gradle
+CocoaPods 分发的是**预编译 XCFramework**（`WhatsNew.xcframework.zip`，挂在 GitHub Release 上）。
+Kotlin/Native 的 iOS 产物无法在 Linux 上构建，所以它由 macOS 构建后上传，
+podspec 通过 `vendored_frameworks` 引用。
 
-在 `settings.gradle.kts` 中：
+### 3. 本地源码（调试 / 二次开发）
 
 ```kotlin
-include(":kuikly-whatsnew-core")
-include(":kuikly-whatsnew-compose")
-include(":kuikly-whatsnew-dsl")
-```
+// settings.gradle.kts
+include(":whatsnew")
+project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
-### 步骤 3：添加依赖
-
-```kotlin
-kotlin {
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":kuikly-whatsnew-core"))
-                implementation(project(":kuikly-whatsnew-compose"))
-                implementation(project(":kuikly-whatsnew-dsl"))
-            }
-        }
-    }
-}
+// build.gradle.kts
+implementation(project(":whatsnew"))
 ```
 
 ---
 
-## 方式四：Git Submodule
+## 二、定义内容
 
-适合需要跟踪上游更新的场景。
-
-```bash
-# 添加子模块
-git submodule add https://github.com/your-org/kuikly-whatsnew-kit.git libs/kuikly-whatsnew-kit
-
-# 初始化
-git submodule update --init --recursive
-```
-
-然后在 `settings.gradle.kts` 中 include 对应模块。
-
----
-
-## Compose DSL 完整教程
-
-### 场景 1：手动展示（最简单）
+### 单个版本
 
 ```kotlin
-import io.github.Richard102257.whatsnew.compose.*
-import io.github.Richard102257.whatsnew.core.*
+import io.github.Richard102257.whatsnew.*
 
-@Composable
-fun MyScreen() {
-    // 1. 创建 WhatsNew 数据
-    val whatsNew = remember {
-        whatsNew {
-            version("2.0.0")
-            title("What's New")
-
-            feature(
-                imageSource = WhatsNew.ImageSource.SystemIcon("star.fill"),
-                title = "新功能",
-                subtitle = "这是一个很棒的新功能"
-            )
-
-            primaryAction {
-                title = "继续"
-                backgroundColor = 0xFF6200EE
-                foregroundColor = 0xFFFFFFFF
-            }
-
-            secondaryAction {
-                title = "了解更多"
-                foregroundColor = 0xFF6200EE
-                openURL("https://your-app.com/changelog")
-            }
-        }
-    }
-
-    // 2. 控制展示状态
-    var showWhatsNew by remember { mutableStateOf(false) }
-
-    // 3. 页面内容
-    Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = { showWhatsNew = true }) {
-            Text("查看更新")
-        }
-    }
-
-    // 4. 展示 WhatsNew
-    if (showWhatsNew) {
-        WhatsNewDialog(
-            whatsNew = whatsNew,
-            onDismiss = { showWhatsNew = false }
-        )
-    }
-}
-```
-
-### 场景 2：自动展示（推荐）
-
-```kotlin
-import io.github.Richard102257.whatsnew.compose.*
-import io.github.Richard102257.whatsnew.core.*
-
-// ─── 在 Application 级别初始化 ───
-class MyApp : ComposeContainer() {
-
-    override fun willInit() {
-        super.willInit()
-
-        // 1. 创建版本存储（持久化）
-        val versionStore = createPersistentWhatsNewVersionStore()
-
-        // 2. 定义所有版本更新内容
-        val whatsNewCollection = whatsNewCollection {
-            whatsNew("1.0.0") {
-                title("欢迎使用")
-                feature(
-                    imageSource = WhatsNew.ImageSource.SystemIcon("star.fill"),
-                    title = "跨平台开发",
-                    subtitle = "一次编写，多端运行"
-                )
-                primaryAction {
-                    title = "开始使用"
-                    backgroundColor = 0xFF6200EE
-                    foregroundColor = 0xFFFFFFFF
-                }
-            }
-
-            whatsNew("2.0.0") {
-                title("v2.0 更新")
-                feature(
-                    imageSource = WhatsNew.ImageSource.SystemIcon("wand.and.stars"),
-                    title = "AI 驱动开发"
-                )
-                feature(
-                    imageSource = WhatsNew.ImageSource.SystemIcon("globe"),
-                    title = "支持更多平台"
-                )
-                primaryAction {
-                    title = "继续"
-                    backgroundColor = 0xFF6200EE
-                    foregroundColor = 0xFFFFFFFF
-                }
-                secondaryAction {
-                    title = "了解更多"
-                    foregroundColor = 0xFF6200EE
-                    openURL("https://your-app.com/changelog")
-                }
-            }
-        }
-
-        // 3. 创建环境
-        val environment = WhatsNewEnvironment(
-            versionStore = versionStore,
-            whatsNewCollection = whatsNewCollection
-        )
-
-        // 4. 设置内容
-        setContent {
-            WhatsNewComposeProvider(environment = environment) {
-                MainScreen()
-            }
-        }
-    }
-}
-
-@Composable
-fun MainScreen() {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text("你的应用内容")
-        // WhatsNew 会自动在版本更新时弹出
-    }
-}
-```
-
-### 场景 3：全屏展示
-
-```kotlin
-@Composable
-fun FullScreenExample() {
-    val whatsNew = remember { createSampleWhatsNew() }
-
-    WhatsNewFullScreen(
-        whatsNew = whatsNew,
-        onDismiss = { /* 处理关闭 */ }
-    )
-}
-```
-
-### 场景 4：自定义布局
-
-```kotlin
 val whatsNew = whatsNew {
-    version("2.0.0")
-    title("What's New")
+    version("2.0.0")                          // 对应 App 的 versionName
+    title("What's New in v2.0")               // 可选，默认 "What's New"
 
     feature(
-        imageSource = WhatsNew.ImageSource.SystemIcon("flame.fill"),
-        title = "新功能"
+        icon = WhatsNewIcon.SystemIcon("star.fill"),
+        title = "AI-Powered Development",
+        subtitle = "Generate boilerplate with a single prompt."
+    )
+    feature(
+        icon = WhatsNewIcon.SystemIcon("bolt.fill"),
+        title = "Lightning Fast",
+        subtitle = "Native rendering keeps 60fps on every platform."
     )
 
+    // 主按钮（必有）
     primaryAction {
-        title = "知道了"
-        backgroundColor = 0xFF4CAF50
+        title = "Continue"
+        backgroundColor = 0xFF6200EE
         foregroundColor = 0xFFFFFFFF
-        cornerRadius = 26f  // 圆角
+        cornerRadius = 12f
+        onDismiss = { /* 额外回调，可选 */ }
     }
 
-    layout {
-        copy(
-            contentPadding = WhatsNew.Padding(32f, 64f, 32f, 32f),
-            titleBottomSpacing = 48f,
-            featureListSpacing = 28f,
-            primaryButtonHeight = 56f
-        )
-    }
-}
-```
-
----
-
-## Kuikly DSL 完整教程
-
-### 场景 1：手动展示
-
-```kotlin
-import com.tencent.kuikly.core.annotations.Page
-import com.tencent.kuikly.core.pager.Pager
-import io.github.Richard102257.whatsnew.dsl.*
-import io.github.Richard102257.whatsnew.core.*
-
-@Page("myPage")
-class MyPage : Pager() {
-
-    private var whatsNewView: WhatsNewDslView? = null
-
-    override fun createRenderView() {
-        super.createRenderView()
-
-        // 创建按钮
-        val button = DivView().apply {
-            attr {
-                width(200f)
-                height(48f)
-                borderRadius(12f)
-                backgroundColor(0xFF6200EE)
-                justifyContentCenter()
-                alignItemsCenter()
-            }
-            event {
-                click { showWhatsNew() }
-            }
-            addSubView(TextView().apply {
-                attr {
-                    text("查看更新")
-                    color(0xFFFFFFFF)
-                    fontSize(16f)
-                    fontWeight600()
-                }
-            })
-        }
-
-        getRenderView().addSubView(button)
-    }
-
-    private fun showWhatsNew() {
-        val whatsNew = whatsNew {
-            version("2.0.0")
-            title("What's New")
-
-            feature(
-                imageSource = WhatsNew.ImageSource.SystemIcon("star.fill"),
-                title = "新功能",
-                subtitle = "这是一个很棒的新功能"
-            )
-
-            primaryAction {
-                title = "继续"
-                backgroundColor = 0xFF6200EE
-                foregroundColor = 0xFFFFFFFF
-            }
-        }
-
-        whatsNewView = WhatsNewDslView(
-            whatsNew = whatsNew,
-            onDismiss = {
-                // 移除视图
-                whatsNewView?.let { getRenderView().removeSubView(it) }
-                whatsNewView = null
-            },
-            onSecondaryAction = { actionType ->
-                when (actionType) {
-                    is WhatsNew.SecondaryActionType.OpenURL -> {
-                        // 打开 URL
-                    }
-                    is WhatsNew.SecondaryActionType.Custom -> {
-                        actionType.handler()
-                    }
-                }
-            }
-        )
-
-        getRenderView().addSubView(whatsNewView!!)
+    // 次按钮（可选）
+    secondaryAction {
+        title = "Learn More"
+        foregroundColor = 0xFF6200EE
+        openURL("https://github.com/Richard102257/kuikly-whatsnew-kit")
+        // 或：custom { /* 自定义逻辑 */ }
     }
 }
 ```
 
-### 场景 2：自动展示
-
-```kotlin
-@Page("autoWhatsNewPage")
-class AutoWhatsNewPage : Pager() {
-
-    private val environment by lazy {
-        WhatsNewEnvironment(
-            versionStore = createPersistentWhatsNewVersionStore(),
-            whatsNewCollection = whatsNewCollection {
-                whatsNew("1.0.0") {
-                    title("欢迎使用")
-                    feature(
-                        imageSource = WhatsNew.ImageSource.SystemIcon("star.fill"),
-                        title = "跨平台开发"
-                    )
-                    primaryAction {
-                        title = "开始使用"
-                        backgroundColor = 0xFF6200EE
-                        foregroundColor = 0xFFFFFFFF
-                    }
-                }
-                whatsNew("2.0.0") {
-                    title("v2.0 更新")
-                    feature(
-                        imageSource = WhatsNew.ImageSource.SystemIcon("wand.and.stars"),
-                        title = "AI 驱动"
-                    )
-                    primaryAction {
-                        title = "继续"
-                        backgroundColor = 0xFF6200EE
-                        foregroundColor = 0xFFFFFFFF
-                    }
-                }
-            }
-        )
-    }
-
-    override fun createRenderView() {
-        super.createRenderView()
-
-        // 你的页面内容
-        val content = createPageContent()
-        getRenderView().addSubView(content)
-
-        // 自动检查并展示 WhatsNew
-        val whatsNew = environment.whatsNew()
-        if (whatsNew != null) {
-            val view = WhatsNewDslView(
-                whatsNew = whatsNew,
-                onDismiss = {
-                    environment.markAsPresented(whatsNew.version)
-                }
-            )
-            getRenderView().addSubView(view)
-        }
-    }
-
-    private fun createPageContent(): DivView {
-        val container = DivView()
-        container.attr {
-            flex(1f)
-            flexDirectionFlexColumn()
-            justifyContentCenter()
-            alignItemsCenter()
-        }
-        // ... 你的页面内容
-        return container
-    }
-}
-```
-
----
-
-## 发布指南
-
-### 发布到 Maven Central
-
-#### 前置条件
-
-1. 注册 [Sonatype JIRA](https://issues.sonatype.org) 账号
-2. 创建 GroupId 对应的项目工单（如 `io.github.Richard102257.whatsnew`）
-3. 生成 GPG 签名密钥
-
-#### 配置 `~/.gradle/gradle.properties`
-
-```properties
-# GPG 签名
-signing.keyId=YOUR_KEY_ID
-signing.password=YOUR_KEY_PASSWORD
-signing.secretKeyRingFile=/path/to/secring.gpg
-
-# Maven Central 凭据
-mavenCentralUsername=YOUR_SONATYPE_USERNAME
-mavenCentralPassword=YOUR_SONATYPE_PASSWORD
-```
-
-#### 发布命令
-
-```bash
-# 发布所有模块
-./gradlew :core:publish
-./gradlew :compose:publish
-./gradlew :dsl:publish
-
-# 或一次性发布
-./gradlew publish
-```
-
-#### 在 Sonatype 上 Release
-
-1. 登录 [Sonatype Repository Manager](https://s01.oss.sonatype.org/)
-2. 进入 Staging Repositories
-3. 找到你的 staging repo，点击 Close
-4. 验证通过后，点击 Release
-
-### 发布到 JitPack（更简单）
-
-1. 在 GitHub 上创建 Release/Tag（如 `v1.0.0`）
-2. 访问 `https://jitpack.io/#your-org/kuikly-whatsnew-kit/v1.0.0`
-3. JitPack 自动构建，等待 Build 状态变为 `Get it`
-4. 复制生成的依赖配置
-
----
-
-## 常见问题
-
-### Q1: 支持 HarmonyOS 吗？
-
-支持。Kuikly 本身支持 HarmonyOS，WhatsNewKit 作为 Kuikly 上层库自然支持。只需确保你的 Kuikly 项目已配置 HarmonyOS 编译目标。
-
-### Q2: 如何在 iOS 上使用？
-
-```kotlin
-// 在 iOS 端，通过 Kotlin/Native 生成的 Framework 使用
-// 无需额外配置，commonMain 代码自动编译为 iOS Framework
-```
-
-### Q3: 自定义图标怎么办？
-
-```kotlin
-// 使用图片 URL
-feature(
-    imageSource = WhatsNew.ImageSource.ResourcePath("https://your-cdn.com/icon.png"),
-    title = "新功能"
-)
-
-// 或使用本地资源
-feature(
-    imageSource = WhatsNew.ImageSource.ResourcePath("assets://images/star.png"),
-    title = "新功能"
-)
-```
-
-### Q4: 如何测试 WhatsNew 展示？
-
-```kotlin
-// 使用 InMemoryWhatsNewVersionStore 进行测试
-val testStore = InMemoryWhatsNewVersionStore()
-val environment = WhatsNewEnvironment(
-    versionStore = testStore,
-    whatsNewCollection = testCollection
-)
-
-// 每次测试前清空
-testStore.clear() // 需要实现 clear 方法
-```
-
-### Q5: 从 Swift WhatsNewKit 迁移？
-
-| Swift | Kotlin (Kuikly) |
-|-------|----------------|
-| `WhatsNew(title:features:)` | `whatsNew { title(); feature() }` |
-| `WhatsNew.Feature(image:title:subtitle:)` | `feature(imageSource = ..., title = ..., subtitle = ...)` |
-| `WhatsNew.PrimaryAction(title:backgroundColor:)` | `primaryAction { title = ...; backgroundColor = ... }` |
-| `.whatsNewSheet()` | `WhatsNewDialog()` 或 `WhatsNewComposeProvider` |
-| `UserDefaultsWhatsNewVersionStore` | `createPersistentWhatsNewVersionStore()` |
-| `WhatsNewEnvironment` | `WhatsNewEnvironment` |
-| `WhatsNewViewController` | `WhatsNewDslView` / `WhatsNewDslPage` |
-
-### Q6: 多个版本如何管理？
+### 多个版本
 
 ```kotlin
 val collection = whatsNewCollection {
-    whatsNew("1.0.0") { /* v1.0 内容 */ }
-    whatsNew("1.1.0") { /* v1.1 内容 */ }
-    whatsNew("2.0.0") { /* v2.0 内容 */ }
+    whatsNew("1.0.0") { title("首次发布"); /* ... */ }
+    whatsNew("2.0.0") { title("AI 助手"); /* ... */ }
+    whatsNew("2.1.0") { title("性能优化"); /* ... */ }
 }
+```
 
-// Environment 会自动匹配当前版本，只展示未看过的最新版本
-val environment = WhatsNewEnvironment(
+### 数据模型
+
+| 类型 | 字段 |
+|------|------|
+| `WhatsNew` | `version: WhatsNewVersion`、`title: WhatsNewTitle`、`features: List<WhatsNewFeature>`、`primaryAction`、`secondaryAction?`、`layout` |
+| `WhatsNewTitle` | `text: String`、`foregroundColor: Long`（ARGB） |
+| `WhatsNewFeature` | `icon: WhatsNewIcon`、`title: String`、`subtitle: String?` |
+| `WhatsNewIcon` | `SystemIcon(name)`、`UrlIcon(url)` |
+| `WhatsNewPrimaryAction` | `title`、`backgroundColor`、`foregroundColor`、`cornerRadius`、`onDismiss` |
+| `WhatsNewSecondaryAction` | `title`、`foregroundColor`、`cornerRadius`、`action: SecondaryActionType` |
+| `SecondaryActionType` | `OpenURL(url)`、`Custom(handler)` |
+
+> 颜色一律用 **ARGB Long**，例如 `0xFF6200EE`（不透明紫）。
+> `SystemIcon` 目前用 emoji 占位渲染（`star.fill` → ⭐），无需图片资源。
+
+---
+
+## 三、在页面中使用
+
+### 方式 A：Kuikly DSL 页面（推荐）
+
+```kotlin
+import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.pager.Pager
+import io.github.Richard102257.whatsnew.*
+
+class HomePage : Pager() {
+
+    private val environment = WhatsNewEnvironment(
+        versionStore = createPersistentWhatsNewVersionStore(),
+        whatsNewCollection = collection
+    )
+
+    override fun body(): ViewBuilder = {
+        val pending = this@HomePage.environment.whatsNew()
+
+        if (pending != null) {
+            addChild(WhatsNewView()) {
+                setup(pending) {
+                    // 主按钮点击后：记录已展示
+                    this@HomePage.environment.markAsPresented(pending.version)
+                }
+            }
+        } else {
+            addChild(HomeContent()) { }
+        }
+    }
+}
+```
+
+### 方式 B：独立页面（路由打开）
+
+```kotlin
+// App 启动时设置一次默认环境
+defaultWhatsNewEnvironment = WhatsNewEnvironment(
     versionStore = createPersistentWhatsNewVersionStore(),
     whatsNewCollection = collection
+)
+
+// 任意位置打开
+acquireModule<RouterModule>(RouterModule.MODULE_NAME).openPage("WhatsNewPage")
+```
+
+宿主创建 Pager 时需要把 `WhatsNewPage` 注册进去：
+
+```kotlin
+override fun createPage(pageName: String): Pager? {
+    return when (pageName) {
+        "WhatsNewPage" -> WhatsNewPage()
+        else -> super.createPage(pageName)
+    }
+}
+```
+
+### 方式 C：Compose DSL 页面
+
+```kotlin
+import io.github.Richard102257.whatsnew.*
+
+@Composable
+fun MyScreen() {
+    val state = remember { WhatsNewComposeState(environment) }
+
+    Column(Modifier.fillMaxSize()) {
+        Button(onClick = { state.autoPresent() }) { Text("查看更新") }
+    }
+
+    state.pendingWhatsNew?.let { pending ->
+        // 用任意容器承载 WhatsNewView（例如 Kuikly 的 Compose 互操作节点）
+        WhatsNewView().apply {
+            setup(pending) { state.dismiss() }
+        }
+    }
+}
+```
+
+---
+
+## 四、版本匹配规则
+
+`WhatsNewEnvironment.whatsNew()` 按以下顺序返回**第一个未展示过**的条目：
+
+1. **精确匹配**：条目版本 == 当前 App 版本
+2. **patch 回退**：`2.1.3` 没有时回退到 `2.1.0`
+3. **最新未展示**：所有 `<= 当前版本` 的条目里，取最新且未展示的
+
+展示后调用 `markAsPresented(version)` 持久化，下次不再弹出。
+
+```kotlin
+val env = WhatsNewEnvironment(
+    versionStore = createPersistentWhatsNewVersionStore(),  // 持久化
+    whatsNewCollection = collection,
+    defaultLayout = WhatsNewLayout.default                 // 统一布局
+)
+
+env.whatsNew()                    // 待展示内容，或 null
+env.markAsPresented(version)      // 记录已展示
+env.hasPresented(version)         // 是否已展示
+env.currentVersion                // 当前 App 版本（WhatsNewVersion）
+```
+
+自定义存储：实现 `WhatsNewVersionStore` 接口即可（例如存到服务端）。
+
+```kotlin
+class RemoteStore : WhatsNewVersionStore {
+    override fun savePresentedVersion(version: String) { /* ... */ }
+    override fun getPresentedVersions(): Set<String> = emptySet()
+    override fun hasPresented(version: String): Boolean = false
+    override fun clear() { /* ... */ }
+}
+```
+
+---
+
+## 五、自定义布局
+
+```kotlin
+whatsNew {
+    version("2.0.0")
+
+    layout {
+        copy(
+            contentPadding = PaddingValues(top = 48f, start = 24f, bottom = 24f, end = 24f),
+            titleBottomSpacing = 32f,
+            featureListSpacing = 20f,
+            footerActionSpacing = 16f,
+            primaryButtonHeight = 52f,
+            secondaryButtonHeight = 48f
+        )
+    }
+}
+```
+
+全局默认布局：
+
+```kotlin
+WhatsNewLayout.default = WhatsNewLayout(
+    contentPadding = PaddingValues(top = 56f, start = 20f, bottom = 20f, end = 20f)
 )
 ```
 
 ---
 
-## 📞 反馈与支持
+## 六、平台初始化
 
-- GitHub Issues: https://github.com/your-org/kuikly-whatsnew-kit/issues
-- Kuikly 官网: https://kuikly.tds.qq.com
-- Kuikly GitHub: https://github.com/Tencent-TDS/KuiklyUI
+### Android
+
+`getCurrentVersion()` 与 `createPersistentWhatsNewVersionStore()` 依赖 `Context`，
+需在 `Application` 中初始化一次：
+
+```kotlin
+class MyApp : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        initKuiklyWhatsNew(this)
+    }
+}
+```
+
+### iOS
+
+无需初始化，直接使用 `NSBundle` / `NSUserDefaults`。
+
+### HarmonyOS
+
+无需初始化。当前鸿蒙侧的持久化为内存实现，如需落盘请替换
+`OhosWhatsNewVersionStore` 中的 `loadFromPreferences` / `saveToPreferences`。
+
+---
+
+## 七、打开 URL
+
+次按钮的 `openURL(...)` 由宿主注入实现（不同平台跳转方式不同）：
+
+```kotlin
+// App 启动时设置一次
+whatsNewUrlOpener = { url ->
+    acquireModule<RouterModule>(RouterModule.MODULE_NAME).openPage("WebPage", ...)
+    // 或调用平台侧的浏览器 / 内部路由
+}
+```
+
+不设置时，`openURL` 点击无效果（不会崩溃）。
+
+---
+
+## 八、从 SvenTiigi/WhatsNewKit 迁移
+
+| Swift | 本库 |
+|-------|------|
+| `WhatsNew(version:title:features:primaryAction:)` | `whatsNew { version(...); title(...); feature(...) }` |
+| `WhatsNew.Feature(image:title:subtitle:)` | `WhatsNewFeature(icon, title, subtitle)` |
+| `WhatsNew.Title(text:foregroundColor:)` | `WhatsNewTitle(text, foregroundColor)` |
+| `WhatsNew.PrimaryAction(title:backgroundColor:foregroundColor:action:)` | `primaryAction { title = ...; onDismiss = ... }` |
+| `WhatsNew.SecondaryAction(title:action:)` | `secondaryAction { title = ...; openURL(...) }` |
+| `WhatsNew.Version(major:minor:patch:)` | `WhatsNewVersion(major, minor, patch)` |
+| `WhatsNewEnvironment(whatsNewCollection:versionStore:)` | `WhatsNewEnvironment(whatsNewCollection = ..., versionStore = ...)` |
+| `environment.whatsNew()` | `environment.whatsNew()` |
+| `WhatsNewVersionStore` 协议 | `WhatsNewVersionStore` 接口 |
+
+---
+
+## 九、常见问题
+
+**Q：为什么只有一个模块？**
+WhatsNew 的 UI 完全可以用 Kuikly DSL（`DivView` / `TextView`）表达，Kuikly 会把它渲染成各平台原生控件。
+再写一套 Android `LinearLayout`、iOS `UIView`、鸿蒙组件属于重复实现，因此已删除。
+
+**Q：iOS 为什么走 XCFramework 而不是源码 pod？**
+CocoaPods / Xcode 不编译 Kotlin。Kotlin/Native 必须先编译成 `.framework`，
+再打包成 XCFramework 分发。
+
+**Q：JitPack 上的版本号是什么格式？**
+`com.github.<user>.<repo>:<module>:<tag>`，例如
+`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1`。
+
+**Q：图标能用自己的图片吗？**
+可以，使用 `WhatsNewIcon.UrlIcon("https://...")`。当前版本以占位符渲染，
+后续会接入 Kuikly 的 `ImageView`。
+
+**Q：支持深色模式吗？**
+颜色是显式传入的 ARGB 值，按需给两套配色即可。

@@ -27,10 +27,10 @@ jobs:
       - name: Locate and zip XCFramework
         run: |
           set -e
-          XCF=$(find whatsnew/build -name "WhatsNew.xcframework" -maxdepth 5 -type d | head -1)
+          XCF=$(find whatsnew/build -maxdepth 5 -name "WhatsNew.xcframework" -type d | head -1)
           if [ -z "$XCF" ]; then
             echo "XCFramework not found; build output:"
-            find whatsnew/build -name "*.xcframework" -o -name "*.framework" | head -20
+            find whatsnew/build -name "*.xcframework" | head -20
             exit 1
           fi
           echo "Found: $XCF"

@@ -32,6 +32,8 @@ kotlin {
 
     // ─── iOS（仅 macOS 可构建）───
     if (isMacOs) {
+        // XCFramework 聚合产物（CocoaPods 分发用）：./gradlew :whatsnew:assembleWhatsNewXCFramework
+        val whatsNewXcf = XCFramework("WhatsNew")
         listOf(
             iosX64(),
             iosArm64(),
@@ -40,6 +42,7 @@ kotlin {
             it.binaries.framework {
                 baseName = "WhatsNew"
                 isStatic = true
+                whatsNewXcf.add(this)
             }
         }
     }
@@ -95,12 +98,13 @@ android {
 //    （podspec 见根目录 WhatsNew.podspec，指向 GitHub Release 上的预编译 zip）。
 
 // ─── iOS XCFramework 构建任务（仅 macOS）───
-// 产物用于 CocoaPods 分发：./gradlew :whatsnew:buildXCFramework
+// 产物用于 CocoaPods 分发：./gradlew :whatsnew:assembleWhatsNewXCFramework
+// 输出目录：whatsnew/build/XCFrameworks/release/WhatsNew.xcframework
 if (isMacOs) {
     tasks.register("buildXCFramework") {
         group = "build"
         description = "Assemble the WhatsNew XCFramework for CocoaPods distribution"
-        dependsOn(tasks.matching { it.name.contains("XCFramework") })
+        dependsOn("assembleWhatsNewXCFramework")
     }
 }
 

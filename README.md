@@ -1,7 +1,7 @@
 # Kuikly WhatsNewKit
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue.svg)](https://kotlinlang.org)
-[![Kuikly](https://img.shields.io/badge/Kuikly-2.0-green.svg)](https://kuikly.tds.qq.com)
+[![Kuikly](https://img.shields.io/badge/Kuikly-2.1.1-green.svg)](https://kuikly.tds.qq.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20HarmonyOS%20%7C%20Web%20%7C%20Mini%20Programs-orange.svg)](https://kuikly.tds.qq.com)
 
@@ -127,7 +127,7 @@ kotlin {
 ### 2. Define Your WhatsNew Content
 
 ```kotlin
-import io.github.Richard102257.*
+import io.github.Richard102257.whatsnew.*
 
 val whatsNew = whatsNew {
     version("2.0.0")
@@ -162,7 +162,7 @@ val whatsNew = whatsNew {
 ### 3. Kuikly DSL Usage
 
 ```kotlin
-import io.github.Richard102257.*
+import io.github.Richard102257.whatsnew.*
 import com.tencent.kuikly.core.views.DivView
 
 class MyPager : Pager() {
