@@ -46,6 +46,9 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 
 ```bash
 ./gradlew :whatsnew:assembleRelease :whatsnew:publishToMavenLocal
+
+# 单元测试（纯逻辑：版本解析/比较、版本存储、DSL Builder）
+./gradlew :whatsnew:testDebugUnitTest
 ```
 
 ---
