@@ -23,3 +23,4 @@ include(":whatsnew")
 // ─── Demo 工程（不发布）───
 include(":androidApp")
 include(":shared")
+include(":miniApp")

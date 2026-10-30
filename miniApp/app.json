@@ -1,8 +1,0 @@
-{
-  "pages": ["pages/index/index"],
-  "window": {
-    "navigationBarTitleText": "WhatsNewKit Demo",
-    "navigationBarBackgroundColor": "#667eea"
-  },
-  "style": "v2"
-}

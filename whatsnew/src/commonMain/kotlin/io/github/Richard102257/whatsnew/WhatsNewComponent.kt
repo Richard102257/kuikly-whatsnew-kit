@@ -50,7 +50,8 @@ data class WhatsNewVersion(
             )
         }
 
-        fun current(): WhatsNewVersion = getCurrentVersion()
+        fun current(): WhatsNewVersion =
+            whatsNewCurrentVersionOverride?.let { parse(it) } ?: getCurrentVersion()
     }
 }
 
@@ -241,3 +242,16 @@ fun whatsNew(configure: WhatsNewBuilder.() -> Unit): WhatsNew {
  * 平台特定：获取当前 App 版本
  */
 expect fun getCurrentVersion(): WhatsNewVersion
+
+/**
+ * 手动覆盖当前版本号，优先级高于各平台的自动探测。
+ *
+ * Web / 微信小程序没有可靠的「原生版本号」来源（小程序开发版返回空字符串），
+ * 这类场景建议在 App 启动时显式设置：
+ * ```
+ * whatsNewCurrentVersionOverride = "1.2.0"
+ * ```
+ * 设为 `null` 则回退到各平台的默认探测逻辑。
+ */
+var whatsNewCurrentVersionOverride: String? = null
+

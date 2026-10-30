@@ -30,16 +30,16 @@ install:
 发布步骤：
 
 ```bash
-git tag v1.1.1
-git push origin v1.1.1
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
-然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.1.1` 触发构建。
+然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.2.0` 触发构建。
 
 用户侧引用：
 
 ```kotlin
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
 ```
 
 本地验证构建：
@@ -71,8 +71,8 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
 cd whatsnew/build/XCFrameworks/release
 zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework
 
-gh release create v1.1.1 WhatsNew.xcframework.zip \
-  --title "v1.1.1" --notes "WhatsNew 1.1.1"
+gh release create v1.2.0 WhatsNew.xcframework.zip \
+  --title "v1.2.0" --notes "WhatsNew 1.2.0"
 ```
 
 或由 CI 自动完成（`.github/workflows/release-ios.yml`，模板见 `docs/ci/release-ios.yml`）：

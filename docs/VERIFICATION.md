@@ -14,10 +14,18 @@
 | Android 发布产物 | `./gradlew :whatsnew:assembleRelease` | ✅ AAR + klib |
 | iOS 编译（arm64） | `./gradlew :whatsnew:compileKotlinIosArm64` | ✅ BUILD SUCCESSFUL |
 | iOS 编译（模拟器） | `./gradlew :whatsnew:compileKotlinIosSimulatorArm64` / `compileKotlinIosX64` | ✅ |
-| 单元测试 | `./gradlew :whatsnew:testDebugUnitTest` | ✅ 10 tests / 0 failures |
+| **JS 编译** | `./gradlew :whatsnew:compileKotlinJs` | ✅ BUILD SUCCESSFUL |
+| 单元测试（JVM/Android） | `./gradlew :whatsnew:testDebugUnitTest` | ✅ 10 tests / 0 failures |
+| **单元测试（JS / node）** | `./gradlew :whatsnew:jsNodeTest` | ✅ 19 tests / 0 failures（10 common + 9 platform） |
+| 发布到 mavenLocal | `./gradlew :whatsnew:publishToMavenLocal` | ✅ 生成 `whatsnew-js-1.2.0.klib` |
 
 单元测试覆盖：版本号解析（含 `2`、`2.3`、`abc`、空串）、版本比较、`InMemoryWhatsNewVersionStore`、
 DSL Builder 产物（title / features / primaryAction / secondaryAction / layout）、集合顺序。
+
+JS 单测（`whatsnew/src/jsTest/.../PlatformJsTest.kt`）在 node 里伪造 `wx` / `localStorage`，
+覆盖：小程序版本号读取、开发版空版本号与 `trial` 的过滤、覆盖值优先级、三种存储后端
+（wx storage / localStorage / 内存兜底）、与原生平台一致的逗号分隔存储格式、
+`WhatsNewEnvironment` 的自动展示与去重。
 
 ## 2. Android 分发（JitPack）
 
@@ -33,6 +41,24 @@ DSL Builder 产物（title / features / primaryAction / secondaryAction / layout
 
 - `:androidApp:assembleDebug` → ✅ `androidApp-debug.apk`（6.4 MB）
 - `:shared:compileKotlinIosArm64`（Demo 共享代码依赖 `project(":whatsnew")`）→ ✅ BUILD SUCCESSFUL
+
+## 3.1 小程序 / H5
+
+`miniApp/` 是一个真实的 Kotlin/JS 业务模块（Kuikly 插件 + KSP + `@Page` 页面）：
+
+| 检查项 | 命令 | 结果 |
+|--------|------|------|
+| 业务模块编译 | `./gradlew :miniApp:compileKotlinJs` | ✅ BUILD SUCCESSFUL |
+| KSP 页面注册 | 查看 `miniApp/build/generated/ksp/js/jsMain/kotlin/KuiklyCoreEntry.kt` | ✅ 含 `BridgeManager.registerPageRouter("WhatsNewDemoPage")` |
+| 打包 bundle | `./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage` | ✅ `nativevue2.zip`（`nativevue2.js` 1,872,375 B） |
+
+产物路径：`miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip`。
+
+> 本机没有微信开发者工具，也没有 Kuikly 官方 `h5App-js` / `miniApp-js` 壳工程的构建产物，
+> 因此**未做真机 / 真浏览器渲染验证**。已完成的验证是：库在 JS 工具链上编译通过、
+> 逻辑层单测通过、含 `WhatsNewView` 的页面能被 KSP 注册并 webpack 打成 bundle。
+> 把该 bundle 放进官方壳工程后即可在微信开发者工具 / 浏览器中预览，步骤见
+> [MINIAPP_zh.md](MINIAPP_zh.md)。
 
 ## 4. iOS 分发
 

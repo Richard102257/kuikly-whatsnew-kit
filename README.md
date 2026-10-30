@@ -1,7 +1,7 @@
 # Kuikly WhatsNewKit
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue.svg)](https://kotlinlang.org)
-[![Kuikly](https://img.shields.io/badge/Kuikly-2.1.1-green.svg)](https://kuikly.tds.qq.com)
+[![Kuikly](https://img.shields.io/badge/Kuikly-2.4.0-green.svg)](https://kuikly.tds.qq.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20HarmonyOS%20%7C%20Web%20%7C%20Mini%20Programs-orange.svg)](https://kuikly.tds.qq.com)
 
@@ -35,15 +35,18 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
             }
         }
     }
 }
 ```
 
-> JitPack 在 Linux 上构建，只能产出 **Android AAR + 公共元数据**。
+> JitPack 在 Linux 上构建，能产出 **Android AAR + JS klib + 公共元数据**。
 > Kotlin/Native 的 iOS klib 必须在 macOS 上编译，所以 iOS 走下面两种方式之一。
+>
+> ⚠️ 1.2.0 起默认依赖 Kuikly `2.4.0-2.0.21`（js 产物从这个版本开始有）。
+> 如果你的工程还在 `2.1.x`，升级前请先确认其它依赖兼容。
 
 ### iOS
 
@@ -61,7 +64,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.2.0'
 ```
 
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-KuiklyWhatsNew-red)](https://cocoapods.org/pods/KuiklyWhatsNew)
@@ -81,6 +84,30 @@ framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用
 鸿蒙 target 需要 Kuikly 的 `ohosArm64` 目标，使用 `whatsnew/build.ohos.gradle.kts`
 在 macOS / 鸿蒙工具链上构建，或同样走源码模块方式引入。
 
+### 微信小程序 / H5
+
+库从 **1.2.0** 起声明了 `js(IR)` 目标，`commonMain` 代码直接编译成 JS，
+不需要重写 UI。两个平台的差异只有版本号和存储，库已经处理好了：
+
+| 能力 | 微信小程序 | H5 |
+|------|-----------|-----|
+| 版本号 | `wx.getAccountInfoSync().miniProgram.version` | `<meta name="app-version">` / `window.__WHATSNEW_VERSION__` |
+| 存储 | `wx.getStorageSync` / `setStorageSync` | `localStorage` |
+
+```kotlin
+// 开发版小程序读不到版本号时，显式覆盖（正式包可删）
+whatsNewCurrentVersionOverride = "1.2.0"
+
+val environment = WhatsNewEnvironment(
+    versionStore = createPersistentWhatsNewVersionStore(), // 自动选 wx / localStorage
+    whatsNewCollection = collection
+)
+```
+
+宿主侧需要 `js(IR) { binaries.executable() }` + Kuikly Gradle 插件 + KSP，
+再交给 Kuikly 官方的 `miniApp-js` / `h5App-js` 壳工程加载。
+
+> 📖 完整步骤见 [docs/MINIAPP_zh.md](docs/MINIAPP_zh.md)
 > 📖 详细集成教程请查看 [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md)
 > 🚀 5 分钟快速上手请查看 [docs/QUICKSTART.md](docs/QUICKSTART.md)
 
@@ -88,7 +115,7 @@ framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用
 
 ## ✨ Features
 
-- ✅ **One codebase, all platforms** — Android、iOS、HarmonyOS 共用同一份 Kuikly DSL 代码
+- ✅ **One codebase, all platforms** — Android、iOS、HarmonyOS、H5、微信小程序共用同一份 Kuikly DSL 代码
 - ✅ **Kuikly DSL + Compose 页面** — `WhatsNewView` 用于 Kuikly DSL；Compose 页面用 `WhatsNewComposeState` 控制展示
 - ✅ **Manual & Automatic presentation** — Full control or let the environment handle it
 - ✅ **Version tracking** — 可插拔的 `WhatsNewVersionStore`（内存 / 平台持久化 / 自定义）
@@ -105,23 +132,27 @@ framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用
 ```
 kuikly-whatsnew-kit/
 ├── whatsnew/                 # 唯一的库模块（KMP，纯 Kuikly DSL）
-│   ├── build.gradle.kts      # Android + iOS 目标（iOS 仅 macOS）
+│   ├── build.gradle.kts      # Android + iOS + JS 目标（iOS 仅 macOS）
 │   ├── build.ohos.gradle.kts # 鸿蒙独立构建脚本
 │   └── src/
 │       ├── commonMain/       # 数据模型 + DSL View + 版本匹配逻辑
 │       ├── androidMain/      # 版本号 + SharedPreferences
 │       ├── iosMain/          # NSBundle + NSUserDefaults
-│       └── ohosArm64Main/    # 鸿蒙 Preferences
+│       ├── jsMain/           # wx.getAccountInfoSync + wx storage / localStorage
+│       ├── ohosArm64Main/    # 鸿蒙 Preferences
+│       ├── commonTest/       # 纯逻辑单测（10 个）
+│       └── jsTest/           # 伪造 wx / localStorage 的 JS 单测（9 个）
 │
 ├── KuiklyWhatsNew.podspec          # iOS 分发（预编译 XCFramework）
 ├── androidApp/ + shared/     # Android Demo
-├── iosApp/ ohosApp/ h5App/ miniApp/  # 其他平台 Demo 工程
+├── miniApp/                  # 小程序 / H5 Demo 业务模块（js + KSP + Kuikly 插件）
+├── iosApp/ ohosApp/ h5App/   # 其他平台 Demo 工程
 ├── docs/                     # 文档（CI 工作流模板在 docs/ci/）
 └── preview/                  # 在线预览
 ```
 
 平台差异只有两件事：**读取 App 版本号** 和 **持久化已展示版本**，
-通过 `expect/actual` 实现，每个平台约 25 行。
+通过 `expect/actual` 实现，每个平台约 25–100 行。
 
 ---
 
@@ -135,7 +166,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
             }
         }
     }
@@ -200,12 +231,16 @@ class MyPager : Pager() {
 也可以直接使用内置页面（自带「无新版本」占位内容）：
 
 ```kotlin
-// 方式 A：直接创建
+// 方式 A：直接创建（推荐）
 val page = WhatsNewPage(environment)
 
-// 方式 B：设置一次全局环境，之后按名字路由打开
-defaultWhatsNewEnvironment = environment
-router.openPage("WhatsNewPage")
+// 方式 B：需要按名字路由时，在自己的模块里包一层 —— Kuikly 的 @Page 是
+// SOURCE 注解且 KSP 只扫描当前模块，库里的页面不会被宿主的 KSP 注册
+@Page("WhatsNewPage")
+internal class AppWhatsNewPage : WhatsNewPage(defaultWhatsNewEnvironment) {
+    init { pageName = "WhatsNewPage" }
+}
+// 之后即可 router.openPage("WhatsNewPage")
 ```
 
 ### 4. Automatic Presentation
@@ -268,8 +303,8 @@ val whatsNew = WhatsNew(
 | Android | ✅ 已验证（JitPack AAR + Demo APK） |
 | iOS | ✅ 已验证（XCFramework + CocoaPods trunk） |
 | HarmonyOS | ✅ 代码就绪（`ohosArm64Main` expect/actual；本机无鸿蒙工具链，未实机验证） |
-| Web (H5) | ⛔ 未声明 js target |
-| Mini Programs | ⛔ 未声明 js target |
+| Web (H5) | ✅ 代码就绪（`jsMain` + 9 个 node 单测；H5 壳工程未在本机跑） |
+| Mini Programs | ✅ 代码就绪（`jsMain` + 9 个 node 单测 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |
 
 ---
 
@@ -279,6 +314,7 @@ val whatsNew = WhatsNew(
 |----------|-------------|
 | [docs/QUICKSTART.md](docs/QUICKSTART.md) | 5 分钟快速上手 |
 | [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md) | 完整集成教程 |
+| [docs/MINIAPP_zh.md](docs/MINIAPP_zh.md) | 微信小程序 / H5 接入指南 |
 | [docs/PUBLISHING.md](docs/PUBLISHING.md) | 发布到 Maven Central / JitPack / CocoaPods |
 | [docs/VERIFICATION.md](docs/VERIFICATION.md) | 各产物的实际验证记录（编译 / 测试 / 分发 / 第三方接入） |
 | [preview/preview.html](preview/preview.html) | 在线预览页面 |

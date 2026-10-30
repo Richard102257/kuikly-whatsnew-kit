@@ -9,13 +9,15 @@ plugins {
 // ─── 版本配置 ───
 object MavenConfig {
     const val GROUP = "io.github.Richard102257"
-    const val VERSION = "1.1.1"
+    const val VERSION = "1.2.0"
     // 鸿蒙版本加后缀避免 Maven 元数据冲突
-    const val VERSION_OHOS = "1.1.1_ohos"
+    const val VERSION_OHOS = "1.2.0_ohos"
 }
 
 // Kuikly 版本（格式：<Kuikly 版本>-<Kotlin 版本>）
-val kuiklyVersion: String = (project.findProperty("kuiklyVersion") as String?) ?: "2.1.1-2.0.21"
+// 2.4.0 起 Kuikly 才提供 js 产物（core-js / core-render-web-*），
+// 这是 Web / 微信小程序支持的硬性前提。
+val kuiklyVersion: String = (project.findProperty("kuiklyVersion") as String?) ?: "2.4.0-2.0.21"
 
 version = MavenConfig.VERSION
 group = MavenConfig.GROUP
@@ -30,6 +32,18 @@ kotlin {
         compilations.all {
             kotlinOptions { jvmTarget = "1.8" }
         }
+    }
+
+    // ─── JS / Web / 微信小程序 ───
+    // 纯 DSL 组件不产出可执行 JS：库只输出 klib，由宿主壳工程（H5 / 小程序）
+    // 打包成 bundle 后运行。
+    js(IR) {
+        browser {
+            // 库的 JS 单测跑在 node 上，浏览器测试需要 Chrome，交给宿主工程
+            testTask { enabled = false }
+        }
+        nodejs()
+        // 浏览器 / 小程序都走 webpack 输出，库本身不需要 executable
     }
 
     // ─── iOS（仅 macOS 可构建）───
@@ -65,6 +79,11 @@ kotlin {
             dependencies {
                 api("com.tencent.kuikly-open:core-render-android:$kuiklyVersion")
             }
+        }
+
+        val jsMain by getting {
+            // Web / 小程序侧只需要 Kuikly 的 JS 标准实现。
+            // core-render-web（h5 / miniapp）由宿主壳工程引入，库不绑定具体运行时。
         }
 
         if (isMacOs) {

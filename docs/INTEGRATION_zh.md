@@ -1,14 +1,14 @@
 # 集成指南（中文）
 
 本库是 **纯 Kuikly DSL 组件**（`componentType: KuiklyView`），只有一个模块 `:whatsnew`。
-Android / iOS / HarmonyOS / Web / 小程序共用同一份代码，不需要任何平台侧原生实现。
+Android / iOS / HarmonyOS / Web / 微信小程序共用同一份代码，不需要任何平台侧原生实现。
 
-平台差异只有两件事，通过 `expect/actual` 提供，每个平台约 25 行：
+平台差异只有两件事，通过 `expect/actual` 提供：
 
-| 能力 | Android | iOS | HarmonyOS |
-|------|---------|-----|-----------|
-| 读取 App 版本号 | `PackageManager` | `NSBundle` | `BundleManager` |
-| 持久化已展示版本 | `SharedPreferences` | `NSUserDefaults` | `Preferences` |
+| 能力 | Android | iOS | HarmonyOS | JS（小程序 / H5） |
+|------|---------|-----|-----------|------------------|
+| 读取 App 版本号 | `PackageManager` | `NSBundle` | `BundleManager` | `wx.getAccountInfoSync()` / `<meta name="app-version">` |
+| 持久化已展示版本 | `SharedPreferences` | `NSUserDefaults` | `Preferences` | `wx.setStorageSync` / `localStorage` |
 
 ---
 
@@ -31,7 +31,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
             }
         }
     }
@@ -40,8 +40,8 @@ kotlin {
 
 ### 2. iOS
 
-JitPack 在 Linux 上构建，只能产出 Android AAR + 公共元数据；iOS 的 Kotlin/Native
-klib 必须在 macOS 上编译。因此 iOS 有三种引入方式：
+JitPack 在 Linux 上构建，只能产出 Android AAR + JS klib + 公共元数据；iOS 的
+Kotlin/Native klib 必须在 macOS 上编译。因此 iOS 有三种引入方式：
 
 **A. 源码模块（推荐）**
 
@@ -57,7 +57,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.1.1'
+pod 'KuiklyWhatsNew', '~> 1.2.0'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
@@ -321,6 +321,29 @@ class MyApp : Application() {
 无需初始化。当前鸿蒙侧的持久化为内存实现，如需落盘请替换
 `OhosWhatsNewVersionStore` 中的 `loadFromPreferences` / `saveToPreferences`。
 
+### 微信小程序 / H5
+
+无需初始化，库会在调用时自动探测：
+
+- 版本号：`wx.getAccountInfoSync().miniProgram.version` → `<meta name="app-version">`
+  → `window.__WHATSNEW_VERSION__` → `1.0.0`
+- 存储：`wx.setStorageSync` → `localStorage` → 内存兜底
+
+小程序开发版读不到版本号，建议显式覆盖：
+
+```kotlin
+whatsNewCurrentVersionOverride = "1.2.0"
+```
+
+H5 也可以用 meta 标签，让版本号跟着构建产物走：
+
+```html
+<meta name="app-version" content="1.2.0">
+```
+
+宿主侧还需要 `js(IR) { binaries.executable() }` + Kuikly Gradle 插件 + KSP，
+详见 [MINIAPP_zh.md](MINIAPP_zh.md)。
+
 ---
 
 ## 七、打开 URL
@@ -367,7 +390,7 @@ CocoaPods / Xcode 不编译 Kotlin。Kotlin/Native 必须先编译成 `.framewor
 
 **Q：JitPack 上的版本号是什么格式？**
 `com.github.<user>.<repo>:<module>:<tag>`，例如
-`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1`。
+`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0`。
 
 **Q：图标能用自己的图片吗？**
 可以，使用 `WhatsNewIcon.UrlIcon("https://...")`。当前版本以占位符渲染，
