@@ -1,24 +1,35 @@
 # KuiklyUI-third-party 注册材料
 
-> 一键补丁已生成：[`docs/third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch`](third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch)
-> （在 `KuiklyUI-Libraries.json` 末尾新增 15 行，JSON 校验通过，共 114 个条目）
+> **当前状态：fork 和分支都已就绪，PR 只差在网页上点一下。**
+>
+> - Fork：https://github.com/Richard102257/KuiklyUI-third-party
+> - 分支：`add-whatsnew`（commit `c9a72c9`，只改 `KuiklyUI-Libraries.json`，+15 行）
+> - 一键开 PR：https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
+>
+> 为什么没直接用 CLI 建 PR：当前用的 fine-grained PAT 只对本人名下的仓库有写权限，
+> 对 `Tencent-TDS/KuiklyUI-third-party` 只能读。`gh pr create` 和 REST `POST /pulls`
+> 都返回 `Resource not accessible by personal access token (403)`。
+> 换成 classic token（`public_repo`）就能一条命令提交，或者直接点上面的链接。
+
+> 补丁见 [`docs/third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch`](third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch)
+> （与分支上的 commit 一致，JSON 校验通过，共 114 个条目）
 
 ## 0. 提交步骤
 
 ```bash
-# 1. 先在网页上 fork：https://github.com/Tencent-TDS/KuiklyUI-third-party/fork
-git clone https://github.com/<你的账号>/KuiklyUI-third-party.git
+# fork 已存在（2026-10-31 创建），直接复用
+git clone https://github.com/Richard102257/KuiklyUI-third-party.git
 cd KuiklyUI-third-party
+git checkout add-whatsnew
 
-# 2. 应用补丁（或按下面第 1 节手动添加）
-git am /path/to/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch
-
-# 3. 推送并开 PR
-git push origin HEAD:add-whatsnew
+# 如需重来：从 main 新建分支并应用补丁
+# git checkout -b add-whatsnew origin/main
+# git am /path/to/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch
 ```
 
-然后访问 `https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...<你的账号>:KuiklyUI-third-party:add-whatsnew`
-创建 PR，标题与描述见第 2、3 节。
+然后点这个链接创建 PR（标题与描述见第 2、3 节）：
+
+https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
 
 ## 1. 添加到 `KuiklyUI-Libraries.json`
 
@@ -27,22 +38,26 @@ git push origin HEAD:add-whatsnew
 ```json
 {
   "githubUrl": "https://github.com/Richard102257/kuikly-whatsnew-kit",
-  "examples": [],
+  "examples": [
+    "https://github.com/Richard102257/kuikly-whatsnew-kit"
+  ],
   "componentName": "WhatsNew",
-  "componentDescription": "A cross-platform \"What's New\" component for KuiklyUI, inspired by SvenTiigi/WhatsNewKit. Pure Kuikly DSL: automatic/manual presentation, version tracking, patch-version fallback, customizable layout, primary and secondary actions.",
+  "componentDescription": "Kuikly 跨端「新功能引导」组件（SvenTiigi/WhatsNewKit 移植），支持自动/手动展示、版本追踪与 patch 回退、自定义布局、主次按钮，提供 Kuikly DSL 与 Compose 页面两种用法",
   "componentType": "KuiklyView",
   "developer": "Richard102257",
   "Android": true,
   "iOS": true,
   "Ohos": true,
-  "Js": false,
+  "Js": true,
   "sDynamic": false
 }
 ```
 
-> 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码，
-> 因此 Android / iOS / Ohos 均为 true，且同一份产物通用。
-> `Js` 暂为 false（未声明 js target）；`sDynamic` 为 false（iOS 侧是静态 framework）。
+> 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码。
+> `Js: true` 的依据是 JitPack 上有 `whatsnew-js-1.3.0.klib`（H5 / 小程序都用这份产物）；
+> `Ohos: true` 的依据是 `ohosArm64` klib 和完整 HAP 都能编出来（`ohosApp/`），
+> 但**没有实机运行过**（Intel Mac 无官方模拟器、无真机、无签名账号），PR 描述里写明了。
+> `sDynamic: false`：jsMain 依赖 `localStorage` / `wx.setStorageSync`，没按动态模式验证过。
 
 ## 2. PR 标题
 
@@ -131,3 +146,5 @@ override fun body(): ViewBuilder = {
 - [x] GitHub Release `v1.3.0` 上有 `WhatsNew.xcframework.zip`
 - [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.3.0'`）
 - [x] README 中的版本号与 tag 一致
+- [x] fork 已建、分支 `add-whatsnew` 已推（`compare` 显示 `ahead 1`，只改 1 个文件）
+- [ ] PR 已提交（**待网页确认**：fine-grained PAT 无权限对 Tencent-TDS 建 PR）
