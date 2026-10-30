@@ -452,3 +452,32 @@ $ curl -sI https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.2.2/KuiklyWhat
 
 推送结束时 `pod` 会打印 `Calling the GitHub commit API timed out` —— 那是 trunk 把 spec
 镜像到 GitHub 仓库的后续步骤受 `github.com:443` 超时影响，**版本已经发布成功**。
+
+## 7. 1.3.0 发布记录
+
+1.3.0 是**新增公开 API**：`WhatsNewOverlay`（遮罩 + 居中圆角卡片）和
+`WhatsNewView.setup(whatsNew, cornerRadius, onDismiss)`。默认呈现方式从「整页铺满」
+变成和 WhatsNewKit 一样的「弹层盖在宿主界面上」，四端截图同步重拍。
+
+| 检查项 | 命令 / 地址 | 结果 |
+|--------|-------------|------|
+| Android 单测 | `./gradlew :whatsnew:testDebugUnitTest` | ✅ BUILD SUCCESSFUL（19s，14 tests） |
+| XCFramework | `./gradlew :whatsnew:assembleWhatsNewXCFramework` | ✅ 6m50s，`WhatsNew.xcframework`（`ios-arm64` + `ios-arm64_x86_64-simulator`） |
+| GitHub Release | `https://github.com/Richard102257/kuikly-whatsnew-kit/releases/tag/v1.3.0` | ✅ `WhatsNew.xcframework.zip` 5,509,625 B，sha256 `a49307c81ef74d4976d0cff76270cb34659ce823e63e27c939cfe180b7613a2a`（zip 内含 `LICENSE`） |
+| JitPack | `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.3.0` | ✅ `status: ok`，commit `2cef6e7`；`whatsnew-1.3.0.pom` 200 (1,510 B)、`whatsnew-android-1.3.0.aar` 200 (78,825 B)、`whatsnew-js-1.3.0.klib` 200 (78,719 B)、`whatsnew-1.3.0.module` 200 |
+| CocoaPods trunk | `pod trunk push KuiklyWhatsNew.podspec --allow-warnings` | ✅ lint 通过（`KuiklyWhatsNew (1.3.0)`）；trunk `versions` 含 `1.3.0`；CDN spec 200（301 → jsdelivr） |
+| 四端截图 | 见 3.2 / 3.4 / 3.5 / 3.6 | ✅ 全部是弹层形态（Android / iOS / H5 / 微信小程序），每端都是「首次弹层 → 真实点击 → 重启后已是最新版本」 |
+
+对应提交：`2cef6e7`（tag `v1.3.0`）。
+
+`pod trunk push` 结尾仍然打印了 `Calling the GitHub commit API timed out`（和 1.2.0 时一样），
+但 trunk API 里版本已经存在，**不需要重推**（重推会 409 already exists）：
+
+```
+$ curl -s https://trunk.cocoapods.org/api/v1/pods/KuiklyWhatsNew
+versions = [..., 1.2.2 (2026-10-30 08:36:11), 1.3.0 (2026-10-30 21:58:59)]
+
+$ curl -sIL https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.3.0/KuiklyWhatsNew.podspec.json
+HTTP/2 301 -> https://cdn.jsdelivr.net/cocoa/Specs/a/6/0/KuiklyWhatsNew/1.3.0/KuiklyWhatsNew.podspec.json
+HTTP/2 200
+```
