@@ -3,16 +3,24 @@ package io.github.Richard102257.whatsnew
 /**
  * 鸿蒙平台实现
  *
- * 鸿蒙侧通过 Kuikly Render 注册自定义组件。
- * 版本获取和持久化使用鸿蒙原生 API。
+ * 本库是纯 Kuikly DSL 组件，鸿蒙侧的渲染由 Kuikly 的 `core-render-ohos` 负责，
+ * 这里只提供两处平台能力：
  *
- * 使用方式：
- * 在宿主 App 的 KuiklyViewDelegate 中注册：
- * override fun getCustomRenderViewCreatorRegisterMap(): Map<String, KRRenderViewCreator> {
- *     val map = mutableMapOf<String, KRRenderViewCreator>()
- *     map[WhatsNewConst.VIEW_NAME] = { WhatsNewOhsImpl() }
- *     return map
- * }
+ * 1. `getCurrentVersion()` —— **当前为占位实现**，鸿蒙的 `bundleManager` 是 ArkTS API，
+ *    Kotlin/Native 侧没有直接绑定，所以这里固定返回 `1.0.0`。
+ *    鸿蒙接入时请显式设置版本号：
+ *    ```
+ *    whatsNewCurrentVersionOverride = "1.2.0"
+ *    ```
+ *    （`WhatsNewVersion.current()` 会优先取这个值，所有平台通用。）
+ *
+ * 2. `createPersistentWhatsNewVersionStore()` —— 当前是**内存实现**，冷启动后丢失。
+ *    需要跨会话保留时，在页面里改用 `createWhatsNewVersionStore()`
+ *    （基于 Kuikly 内置的 `SharedPreferencesModule`，鸿蒙 render 层已实现）。
+ *
+ * 已知限制（未实机验证）：
+ * - 构建需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`（标准 Kotlin 没有 `ohosArm64` 目标）
+ * - `core-render-ohos` 没有发布到 Maven，需从 KuiklyUI 仓库源码构建，由宿主工程提供
  */
 
 // ─── 版本获取 ───
@@ -20,12 +28,11 @@ package io.github.Richard102257.whatsnew
 /**
  * 获取当前 App 版本号
  *
- * 优先从鸿蒙 BundleManager 获取，失败则返回默认值
+ * 鸿蒙原生 `bundleManager.getBundleInfoForSelf()` 是 ArkTS API，
+ * 这里没有绑定，固定返回 `1.0.0`。请用 `whatsNewCurrentVersionOverride` 指定真实版本。
  */
 actual fun getCurrentVersion(): WhatsNewVersion {
     return try {
-        // 通过鸿蒙 OH_GetBundleInfo 获取版本
-        // 实际实现需要调用 @ohos.bundle.bundleManager
         val versionName = getOhosBundleVersion()
         if (versionName.isNotEmpty()) {
             WhatsNewVersion.parse(versionName)
@@ -38,16 +45,17 @@ actual fun getCurrentVersion(): WhatsNewVersion {
 }
 
 /**
- * 从鸿蒙 BundleManager 获取版本号
+ * 从鸿蒙 BundleManager 获取版本号（占位）
  *
- * 对应鸿蒙 API:
+ * 对应的 ArkTS API：
+ * ```
  * import bundleManager from '@ohos.bundle.bundleManager';
- * let bundleInfo = bundleManager.getBundleInfoForSelf(bundleManager.BUNDLE_INFO_DEFAULT);
- * return bundleInfo.versionName;
+ * let info = bundleManager.getBundleInfoForSelf(bundleManager.BUNDLE_INFO_DEFAULT);
+ * return info.versionName;
+ * ```
+ * Kotlin/Native 侧需要 cinterop 才能调用，本库暂未提供，返回空串让上层走兜底。
  */
 private fun getOhosBundleVersion(): String {
-    // 实际项目中通过鸿蒙原生 API 获取
-    // 此处为占位实现，实际由鸿蒙侧原生代码注入
     return ""
 }
 
@@ -58,69 +66,38 @@ actual fun createPersistentWhatsNewVersionStore(): WhatsNewVersionStore {
 }
 
 /**
- * 鸿蒙持久化存储实现
+ * 鸿蒙存储实现（**当前仅内存**）
  *
- * 使用鸿蒙 Preferences (关系型存储) 实现跨进程持久化
+ * 进程内有效，冷启动后丢失 —— 即用户每次重新打开 App 都会再看到一次 WhatsNew。
  *
- * 对应鸿蒙 API:
- * import dataPreferences from '@ohos.data.preferences';
- * let prefs = await dataPreferences.getPreferences(context, 'whatsly_whatsnew');
+ * 需要真正落盘时，请在页面里改用 `createWhatsNewVersionStore()`
+ * （基于 Kuikly 的 `SharedPreferencesModule`，鸿蒙 render 层已实现，跨端通用）：
+ *
+ * ```
+ * class HomePage : Pager() {
+ *     private val environment by lazy {
+ *         WhatsNewEnvironment(versionStore = createWhatsNewVersionStore(), ...)
+ *     }
+ * }
+ * ```
+ *
+ * 如果确实要走鸿蒙原生 `@ohos.data.preferences`，需要 Kotlin/Native cinterop，
+ * 本库暂未提供；也可以在宿主侧实现 [WhatsNewVersionStore] 后注入
+ * `WhatsNewEnvironment(versionStore = ...)`。
  */
 class OhosWhatsNewVersionStore : WhatsNewVersionStore {
 
     private val memoryCache = mutableSetOf<String>()
-    private var prefsLoaded = false
-
-    /**
-     * 懒加载：首次访问时从鸿蒙 Preferences 读取
-     */
-    private fun ensurePrefsLoaded() {
-        if (!prefsLoaded) {
-            loadFromPreferences()
-            prefsLoaded = true
-        }
-    }
 
     override fun savePresentedVersion(version: String) {
-        ensurePrefsLoaded()
         memoryCache.add(version)
-        saveToPreferences(version)
     }
 
-    override fun getPresentedVersions(): Set<String> {
-        ensurePrefsLoaded()
-        return memoryCache.toSet()
-    }
+    override fun getPresentedVersions(): Set<String> = memoryCache.toSet()
 
-    override fun hasPresented(version: String): Boolean {
-        ensurePrefsLoaded()
-        return memoryCache.contains(version)
-    }
+    override fun hasPresented(version: String): Boolean = memoryCache.contains(version)
 
     override fun clear() {
         memoryCache.clear()
-        clearPreferences()
-    }
-
-    // ─── 鸿蒙 Preferences 操作（实际项目中替换为原生 API 调用）───
-
-    private fun loadFromPreferences() {
-        // 实际实现:
-        // import dataPreferences from '@ohos.data.preferences';
-        // let prefs = await dataPreferences.getPreferences(context, 'kuikly_whatsnew');
-        // let all = await prefs.get('presented_versions', '') as string;
-        // if (all.isNotEmpty()) memoryCache.addAll(all.split(','))
-    }
-
-    private fun saveToPreferences(version: String) {
-        // 实际实现:
-        // await prefs.put('presented_versions', memoryCache.joinToString(","));
-        // await prefs.flush();
-    }
-
-    private fun clearPreferences() {
-        // 实际实现:
-        // await prefs.clear();
-        // await prefs.flush();
     }
 }

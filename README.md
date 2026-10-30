@@ -35,7 +35,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
             }
         }
     }
@@ -64,7 +64,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.2.0'
+pod 'KuiklyWhatsNew', '~> 1.2.1'
 ```
 
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-KuiklyWhatsNew-red)](https://cocoapods.org/pods/KuiklyWhatsNew)
@@ -166,7 +166,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
             }
         }
     }
@@ -292,19 +292,31 @@ val whatsNew = WhatsNew(
 | Store | Description |
 |-------|-------------|
 | `InMemoryWhatsNewVersionStore` | Stores in memory, for testing |
-| `createPersistentWhatsNewVersionStore()` | Factory for platform-specific persistent store |
+| `createPersistentWhatsNewVersionStore()` | Factory for platform-specific persistent store (app start, no Pager needed) |
+| `createWhatsNewVersionStore()` | `Pager` extension backed by Kuikly's `SharedPreferencesModule` — works on **every** platform including HarmonyOS |
+| `KuiklySharedPreferencesWhatsNewVersionStore(prefs)` | Same backend, constructed from an existing `SharedPreferencesModule` |
+
+> HarmonyOS 的 `createPersistentWhatsNewVersionStore()` 是内存实现，需要跨冷启动保留时用
+> `createWhatsNewVersionStore()`（页面内）。
 
 ---
 
 ## 📱 Platform Support
 
-| Platform | Status |
-|----------|--------|
-| Android | ✅ 已验证（JitPack AAR `1.2.0` + Demo APK） |
-| iOS | ✅ 已验证（XCFramework 1.2.0 + CocoaPods trunk `KuiklyWhatsNew 1.2.0`） |
-| HarmonyOS | ✅ 代码就绪（`ohosArm64Main` expect/actual；本机无鸿蒙工具链，未实机验证） |
-| Web (H5) | ✅ 已验证（`jsMain` + 9 个 node 单测 + JitPack `whatsnew-js` klib 第三方接入；H5 壳工程未在本机跑） |
-| Mini Programs | ✅ 已验证（同上 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |
+| Platform | 依赖方式 | Status |
+|----------|----------|--------|
+| Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
+| iOS | ① `pod 'KuiklyWhatsNew', '~> 1.2.1'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
+| HarmonyOS | 源码模块（无 Maven 产物） | ⚠️ 代码就绪，需 2 步手动配置，未实机验证 |
+| Web (H5) | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 第三方 `jsNodeRun`；H5 壳工程未在本机跑） |
+| Mini Programs | JitPack（js klib） | ✅ 已验证（同上 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |
+
+**HarmonyOS 的两个手动步骤**（详见 [INTEGRATION_zh.md](docs/INTEGRATION_zh.md)）：
+
+```kotlin
+whatsNewCurrentVersionOverride = "1.2.0"          // 1. 鸿蒙侧读不到 bundle 版本号
+versionStore = createWhatsNewVersionStore()        // 2. 默认实现是内存，页面内改用 Kuikly 模块存储
+```
 
 ---
 

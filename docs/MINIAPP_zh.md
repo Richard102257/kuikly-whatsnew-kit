@@ -108,7 +108,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
             }
         }
     }
@@ -286,8 +286,18 @@ BridgeManager.registerPageRouter("WhatsNewDemoPage") {
 
 **Q：H5 里 `localStorage` 被禁用怎么办？**
 库会自动退化成内存存储（不崩溃），但「已展示版本」不会跨会话保留，
-用户会重复看到 WhatsNew。可以改用 `WhatsNewEnvironment(versionStore = 自己的实现)`，
-例如把已展示版本写进 Cookie 或服务端。
+用户会重复看到 WhatsNew。两种解法：
+
+1. 在页面里改用 `createWhatsNewVersionStore()`（基于 Kuikly 的
+   `SharedPreferencesModule`，H5 / 小程序 render 层都有实现，走的是 Kuikly 自己的存储桥）：
+   ```kotlin
+   class HomePage : Pager() {
+       private val environment by lazy {
+           WhatsNewEnvironment(versionStore = createWhatsNewVersionStore(), ...)
+       }
+   }
+   ```
+2. 自己实现 `WhatsNewVersionStore`，把已展示版本写进 Cookie 或服务端。
 
 **Q：能不能不用 Kuikly 的 Web 渲染层？**
 不能。`WhatsNewView` 是 Kuikly DSL 组件，最终由 `core-render-web` 转成

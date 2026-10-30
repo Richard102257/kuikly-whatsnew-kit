@@ -17,7 +17,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
             }
         }
     }
@@ -27,7 +27,7 @@ kotlin {
 iOS（CocoaPods）：
 
 ```ruby
-pod 'KuiklyWhatsNew', '~> 1.2.0'
+pod 'KuiklyWhatsNew', '~> 1.2.1'
 ```
 
 > 只有一个模块，Android / iOS / HarmonyOS / Web / 小程序通用。
@@ -141,7 +141,26 @@ class MyApp : Application() {
 }
 ```
 
-**iOS / HarmonyOS**：无需初始化，直接使用 `NSBundle` / `BundleManager`。
+**iOS**：无需初始化，直接使用 `NSBundle` / `NSUserDefaults`。
+
+**HarmonyOS**：需要两件事（`bundleManager` 是 ArkTS API，库内暂无绑定）：
+
+```kotlin
+// 1. 指定版本号（否则恒为 1.0.0，组件不会显示）
+whatsNewCurrentVersionOverride = "1.2.0"
+
+// 2. 页面里改用 Kuikly 模块存储（默认实现是内存，冷启动会丢）
+class HomePage : Pager() {
+    private val environment by lazy {
+        WhatsNewEnvironment(
+            versionStore = createWhatsNewVersionStore(),
+            whatsNewCollection = collection
+        )
+    }
+}
+```
+
+**Web / 微信小程序**：无需初始化，版本号与存储自动探测（详见 [MINIAPP_zh.md](MINIAPP_zh.md)）。
 
 ---
 
@@ -168,5 +187,6 @@ whatsNew {
 ## 下一步
 
 - 完整集成说明：[INTEGRATION_zh.md](INTEGRATION_zh.md)
+- 小程序 / H5 接入：[MINIAPP_zh.md](MINIAPP_zh.md)
 - 发布流程：[PUBLISHING.md](PUBLISHING.md)
-- 常见问题：[FAQ.md](FAQ.md)
+- 验证记录：[VERIFICATION.md](VERIFICATION.md)

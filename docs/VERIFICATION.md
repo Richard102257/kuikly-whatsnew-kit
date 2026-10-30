@@ -15,12 +15,14 @@
 | iOS 编译（arm64） | `./gradlew :whatsnew:compileKotlinIosArm64` | ✅ BUILD SUCCESSFUL |
 | iOS 编译（模拟器） | `./gradlew :whatsnew:compileKotlinIosSimulatorArm64` / `compileKotlinIosX64` | ✅ |
 | **JS 编译** | `./gradlew :whatsnew:compileKotlinJs` | ✅ BUILD SUCCESSFUL |
-| 单元测试（JVM/Android） | `./gradlew :whatsnew:testDebugUnitTest` | ✅ 10 tests / 0 failures |
-| **单元测试（JS / node）** | `./gradlew :whatsnew:jsNodeTest` | ✅ 19 tests / 0 failures（10 common + 9 platform） |
+| 单元测试（JVM/Android） | `./gradlew :whatsnew:testDebugUnitTest` | ✅ 14 tests / 0 failures |
+| **单元测试（JS / node）** | `./gradlew :whatsnew:jsNodeTest` | ✅ 23 tests / 0 failures（14 common + 9 platform） |
 | 发布到 mavenLocal | `./gradlew :whatsnew:publishToMavenLocal` | ✅ 生成 `whatsnew-js-1.2.0.klib` |
 
 单元测试覆盖：版本号解析（含 `2`、`2.3`、`abc`、空串）、版本比较、`InMemoryWhatsNewVersionStore`、
-DSL Builder 产物（title / features / primaryAction / secondaryAction / layout）、集合顺序。
+DSL Builder 产物（title / features / primaryAction / secondaryAction / layout）、集合顺序、
+以及 `KuiklySharedPreferencesWhatsNewVersionStore`（跨实例持久化、与原生平台一致的存储键/格式、
+`clear()`、重复写入去重）。
 
 JS 单测（`whatsnew/src/jsTest/.../PlatformJsTest.kt`）在 node 里伪造 `wx` / `localStorage`，
 覆盖：小程序版本号读取、开发版空版本号与 `trial` 的过滤、覆盖值优先级、三种存储后端

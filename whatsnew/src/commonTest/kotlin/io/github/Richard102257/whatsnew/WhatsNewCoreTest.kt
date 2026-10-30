@@ -136,4 +136,60 @@ class WhatsNewCoreTest {
 
         assertEquals(99f, whatsNew.layout.titleBottomSpacing)
     }
+
+    // ─── KuiklySharedPreferencesWhatsNewVersionStore（Pager / 鸿蒙通用存储）───
+
+    /** 模拟 SharedPreferencesModule 的读写，跨实例共享同一份后端 */
+    private class FakePrefs {
+        val values = mutableMapOf<String, String>()
+
+        fun store() = KuiklySharedPreferencesWhatsNewVersionStore(
+            readValue = { key -> values[key] ?: "" },
+            writeValue = { key, value -> values[key] = value },
+        )
+    }
+
+    @Test
+    fun pagerStorePersistsAcrossInstances() {
+        val prefs = FakePrefs()
+
+        val first = prefs.store()
+        assertFalse(first.hasPresented("1.2.0"))
+        first.savePresentedVersion("1.2.0")
+        assertTrue(first.hasPresented("1.2.0"))
+
+        // 新实例 = 下次冷启动，仍能读到
+        assertTrue(prefs.store().hasPresented("1.2.0"))
+        assertEquals(setOf("1.2.0"), prefs.store().getPresentedVersions())
+    }
+
+    @Test
+    fun pagerStoreUsesSameKeyAndFormatAsOtherPlatforms() {
+        val prefs = FakePrefs()
+        prefs.store().savePresentedVersion("1.0.0")
+        prefs.store().savePresentedVersion("2.0.0")
+
+        assertEquals("1.0.0,2.0.0", prefs.values["kuikly_whatsnew_presented_all"])
+    }
+
+    @Test
+    fun pagerStoreClearRemovesEverything() {
+        val prefs = FakePrefs()
+        val store = prefs.store()
+        store.savePresentedVersion("1.0.0")
+        store.clear()
+
+        assertFalse(prefs.store().hasPresented("1.0.0"))
+        assertEquals(emptySet<String>(), prefs.store().getPresentedVersions())
+    }
+
+    @Test
+    fun pagerStoreIgnoresDuplicateSaves() {
+        val prefs = FakePrefs()
+        val store = prefs.store()
+        store.savePresentedVersion("1.0.0")
+        store.savePresentedVersion("1.0.0")
+
+        assertEquals("1.0.0", prefs.values["kuikly_whatsnew_presented_all"])
+    }
 }

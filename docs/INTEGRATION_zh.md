@@ -7,14 +7,24 @@ Android / iOS / HarmonyOS / Web / 微信小程序共用同一份代码，不需�
 
 | 能力 | Android | iOS | HarmonyOS | JS（小程序 / H5） |
 |------|---------|-----|-----------|------------------|
-| 读取 App 版本号 | `PackageManager` | `NSBundle` | `BundleManager` | `wx.getAccountInfoSync()` / `<meta name="app-version">` |
-| 持久化已展示版本 | `SharedPreferences` | `NSUserDefaults` | `Preferences` | `wx.setStorageSync` / `localStorage` |
+| 读取 App 版本号 | `PackageManager` | `NSBundle` | 占位（需 `whatsNewCurrentVersionOverride`） | `wx.getAccountInfoSync()` / `<meta name="app-version">` |
+| 持久化已展示版本 | `SharedPreferences` | `NSUserDefaults` | 内存（或改用 `createWhatsNewVersionStore()`） | `wx.setStorageSync` / `localStorage` |
+
+## 平台接入索引
+
+| 平台 | 依赖方式 | 额外步骤 | 详细文档 |
+|------|----------|----------|----------|
+| **Android** | JitPack（Maven 坐标） | `initKuiklyWhatsNew(context)` | 本页 |
+| **iOS** | ① CocoaPods ② 源码模块 | 无 | 本页 |
+| **鸿蒙** | 源码模块 | ① `whatsNewCurrentVersionOverride` ② 页面内用 `createWhatsNewVersionStore()` | 本页「六、平台初始化」 |
+| **H5** | JitPack（js klib） | `js(IR) { binaries.executable() }` + Kuikly 插件 + `h5App-js` 壳 | [MINIAPP_zh.md](MINIAPP_zh.md) |
+| **微信小程序** | JitPack（js klib） | 同上 + `miniApp-js` 壳 | [MINIAPP_zh.md](MINIAPP_zh.md) |
 
 ---
 
 ## 一、安装
 
-### 1. JitPack（Android / 公共元数据，推荐）
+### 1. JitPack（Android / Web / 小程序，推荐）
 
 ```kotlin
 // settings.gradle.kts
@@ -31,7 +41,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
             }
         }
     }
@@ -57,7 +67,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.2.0'
+pod 'KuiklyWhatsNew', '~> 1.2.1'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
@@ -79,6 +89,50 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 // build.gradle.kts
 implementation(project(":whatsnew"))
 ```
+
+### 4. 鸿蒙
+
+鸿蒙没有可用的 Maven 产物，只能以**源码模块**方式引入（原因见下）：
+
+```kotlin
+// settings.gradle.kts
+include(":whatsnew")
+project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
+```
+
+前置条件（缺一不可）：
+
+| 条件 | 说明 |
+|------|------|
+| Kuikly 定制 Kotlin | 需要 `2.0.21-KBA-010`，标准 Kotlin 没有 `ohosArm64` 目标 |
+| OHOS 渲染层 | `core-render-ohos` **没有发布到 Maven**（Central / 腾讯镜像都 404），由 KuiklyUI 仓库源码构建，宿主鸿蒙工程自带 |
+| 版本号 | 鸿蒙侧的 `bundleManager` 是 ArkTS API，本库暂无 cinterop 绑定，**必须**手动设置 `whatsNewCurrentVersionOverride` |
+| 持久化 | 默认实现是内存，需要跨会话保留时用 `createWhatsNewVersionStore()` |
+
+`whatsnew/build.ohos.gradle.kts` 是独立的鸿蒙构建脚本（只声明 DSL 层 `core`）：
+
+```bash
+cp whatsnew/build.ohos.gradle.kts whatsnew/build.gradle.kts
+./gradlew :whatsnew:assemble
+git checkout whatsnew/build.gradle.kts
+```
+
+> ⚠️ 鸿蒙路径**未实机验证**（本机没有 DevEco / OHOS SDK）。
+> 代码层面 `ohosArm64Main` 的 `expect/actual` 已就位，纯 DSL 的 UI 由 Kuikly 渲染，
+> 但上面两个「额外步骤」必须做，否则组件不会显示（版本号恒为 `1.0.0`）
+> 或每次冷启动都重复显示（存储不落盘）。
+
+### 5. Web（H5）/ 微信小程序
+
+```kotlin
+// build.gradle.kts（你的 Kuikly 业务模块）
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
+```
+
+还需要 `js(IR) { binaries.executable() }` + Kuikly Gradle 插件 + KSP，
+以及 Kuikly 官方的 `h5App-js` / `miniApp-js` 壳工程来加载 bundle。
+
+👉 完整步骤见 [MINIAPP_zh.md](MINIAPP_zh.md)。
 
 ---
 
@@ -318,8 +372,53 @@ class MyApp : Application() {
 
 ### HarmonyOS
 
-无需初始化。当前鸿蒙侧的持久化为内存实现，如需落盘请替换
-`OhosWhatsNewVersionStore` 中的 `loadFromPreferences` / `saveToPreferences`。
+需要两件事（原因见「一、安装 → 4. 鸿蒙」）：
+
+**1. 指定版本号**（鸿蒙侧无法自动读取）：
+
+```kotlin
+whatsNewCurrentVersionOverride = "1.2.0"
+```
+
+**2. 让「已展示版本」真正落盘**：默认的 `createPersistentWhatsNewVersionStore()`
+在鸿蒙上是内存实现，冷启动会丢失。在页面里改用 `createWhatsNewVersionStore()`
+（基于 Kuikly 内置的 `SharedPreferencesModule`，鸿蒙 render 层已实现）：
+
+```kotlin
+class HomePage : Pager() {
+
+    private val environment by lazy {
+        WhatsNewEnvironment(
+            versionStore = createWhatsNewVersionStore(),   // this: Pager
+            whatsNewCollection = collection
+        )
+    }
+
+    override fun body(): ViewBuilder = {
+        val pending = this@HomePage.environment.whatsNew()
+        // ...
+    }
+}
+```
+
+### 所有平台通用：页面内存储（含鸿蒙）
+
+`createWhatsNewVersionStore()` 是 `Pager` 的扩展函数，底层是 Kuikly 的
+`SharedPreferencesModule`，Android / iOS / 鸿蒙 / H5 / 小程序的 render 层各自实现了它，
+所以**一个实现覆盖全部平台**：
+
+```kotlin
+override fun created() {
+    super.created()
+    // 也可以在 created 里提前创建，注意此时已有 Pager
+    val store = createWhatsNewVersionStore()
+}
+```
+
+| 用哪个 | 时机 | 覆盖平台 |
+|--------|------|----------|
+| `createPersistentWhatsNewVersionStore()` | App 启动阶段（还没有 Pager） | Android / iOS / H5 / 小程序（鸿蒙为内存） |
+| `createWhatsNewVersionStore()` | 页面内（有 Pager） | **全部平台，含鸿蒙** |
 
 ### 微信小程序 / H5
 
@@ -390,7 +489,7 @@ CocoaPods / Xcode 不编译 Kotlin。Kotlin/Native 必须先编译成 `.framewor
 
 **Q：JitPack 上的版本号是什么格式？**
 `com.github.<user>.<repo>:<module>:<tag>`，例如
-`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0`。
+`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1`。
 
 **Q：图标能用自己的图片吗？**
 可以，使用 `WhatsNewIcon.UrlIcon("https://...")`。当前版本以占位符渲染，
