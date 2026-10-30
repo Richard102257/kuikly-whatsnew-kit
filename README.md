@@ -71,10 +71,6 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 > iOS 的「点继续」不是手工点的：`iosApp/iosAppUITests` 里的 UI 测试用归一化坐标真点了一下
 > 卡片上的主按钮，然后再重启 App 截图。命令见
 > [docs/VERIFICATION.md](docs/VERIFICATION.md#35-ios-真实渲染截图)。
->
-> ⚠️ 目前 iOS 的第二张（`ios-02-caught-up.png`）还是弹层改造前拍的整页布局：这一轮重截时
-> 本机屏幕被锁，`xcodebuild test` / `simctl` 都起不来，只有第一张是新版。解除锁屏后按
-> VERIFICATION 3.5.1 的第 4、5 步重拍即可（Android / H5 / 小程序的三对图都是新版的弹层）。
 
 小程序侧还要额外编一个 `:miniApp` 渲染入口（官方壳要的 `renderView` / `initApp` /
 `fontLoaded` 都在这个模块里，`core-render-web:miniapp` 本身只导出 `kotlin` / `com`），
@@ -86,7 +82,7 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 | 平台 | 截图 | 说明 |
 |------|------|------|
 | Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
-| iOS | ✅ 已覆盖 | 第一张是新版弹层；第二张仍是改造前的整页布局，重拍步骤见 VERIFICATION 3.5.1 |
+| iOS | ✅ 已覆盖 | 上面的两张，iPhone 16 Pro 模拟器（iOS 18.3）+ Kotlin/Native `shared.framework` + `OpenKuiklyIOSRender`，第二张由 UI 测试真实点击后重启截取 |
 | HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
 | H5 | ✅ 已覆盖 | 上面的两张，Chromium + `core-render-web`（源码构建）+ 官方 `h5App-js` 壳 |
 | 微信小程序 | ✅ 已覆盖 | 上面的两张，微信开发者工具 + `core-render-web:miniapp`（源码构建）+ 官方 `miniApp` 壳，测试号 AppID |

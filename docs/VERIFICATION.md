@@ -202,11 +202,12 @@ node h5shot.js
 | <img src="images/ios-01-whatsnew.png" width="240"> | iPhone 16 Pro 模拟器（iOS 18.3），Kotlin/Native `shared.framework` + 官方 `OpenKuiklyIOSRender` 渲染；宿主界面 + `WhatsNewOverlay` 弹层 |
 | <img src="images/ios-02-caught-up.png" width="240"> | UI 测试真点了一下卡片上的「继续」→ 重启 App：`NSUserDefaults` 里已有 `presented_all=1.2.0`，弹层不再出现，宿主界面顶部显示「已经是最新版本」 |
 
-> ⚠️ **`ios-02` 还是弹层改造前的整页布局**（2026-10-30 17:07 那张）。弹层这一轮重截时
-> 这台机器的屏幕被锁了（`CGSSessionScreenIsLocked = 1`）：`xcodebuild test` 卡在
-> test session 启动前，`simctl boot` / `simctl install` 也一起挂住，所以第二张没能重拍。
-> `ios-01` 是新版（弹层）。解除锁屏后按 [3.5.1](#351-复现步骤) 的第 4、5 步跑一遍即可重拍，
-> 命令和 `dy` 坐标都已经写好了。
+> 这两张都是 2026-10-31 重拍的：`xcodebuild test` 输出
+> `Test Case '-[iosAppUITests.WhatsNewUITests testTapPrimaryAction]' passed (23.453 seconds)`，
+> 之后 `simctl terminate` + `launch` + `simctl io screenshot`。
+> 中途踩到过一次「屏幕锁定时 `xcodebuild test` / `simctl boot` 全部挂住」
+> （`CGSSessionScreenIsLocked = 1`），解锁后一次就过了 —— 如果你在 CI 上跑 UI 测试，
+> 记得 runner 必须处于已登录且未锁屏的图形会话里。
 
 页面源码是 [`shared/src/iosMain/.../WhatsNewIosDemoPage.kt`](../shared/src/iosMain/kotlin/io/github/Richard102257/whatsnew/shared/WhatsNewIosDemoPage.kt)，
 组件本身还是 `:whatsnew` 的 commonMain 代码。和 Android / H5 页面相比只差两点：
