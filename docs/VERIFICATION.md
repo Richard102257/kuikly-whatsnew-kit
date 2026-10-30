@@ -110,7 +110,8 @@ https://github.com/Richard102257/kuikly-whatsnew-kit/releases/download/v1.2.0/Wh
 | 实际发布结果 | ✅ `KuiklyWhatsNew 1.2.0`，2026-10-30 04:02:33 UTC（trunk API 确认） |
 | trunk 所有者 | `Richard <lhui1022@gmail.com>` |
 | CDN 上可读到 podspec | ✅ `https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.2.0/KuiklyWhatsNew.podspec.json` |
-| 真实工程 `pod install`（本地 podspec 指向 1.2.0） | ✅ `Installing KuiklyWhatsNew (1.2.0)` + `OpenKuiklyIOSRender (2.30.0)`，`Pods/KuiklyWhatsNew/WhatsNew.xcframework` 两个切片就位 |
+| 真实工程 `pod install`（本地 podspec 指向 1.2.0） | ✅ `Installing KuiklyWhatsNew (1.2.0)` + `OpenKuiklyIOSRender (2.30.0)` |
+| 真实工程 `pod install '~> 1.2.0'`（**走 trunk / CDN，无本地路径**） | ✅ `Podfile.lock` 里 `KuiklyWhatsNew (1.2.0)`，`Pods/KuiklyWhatsNew/WhatsNew.xcframework` 两个切片就位 |
 
 > `pod trunk push` 命令本身会以 exit 1 结束，报
 > `Calling the GitHub commit API timed out` —— 那是 trunk 把 spec 镜像到 GitHub 仓库的
@@ -118,16 +119,15 @@ https://github.com/Richard102257/kuikly-whatsnew-kit/releases/download/v1.2.0/Wh
 > 里已有 `1.2.0`，CDN 也能取到 spec）。
 >
 > CDN 的 `all_pods_versions_*.txt` 索引由后台任务定期重建，刚发布后
-> `pod install '~> 1.2.0'` 可能短暂解析不到（1.2.0 发布 13 分钟后索引里仍只有 1.1.1）；
-> 这期间可以用本地 podspec 验证：
+> `pod install '~> 1.2.0'` 会短暂解析不到（1.2.0 于 04:02 UTC 发布，
+> 索引在 06:24 UTC 才包含 `KuiklyWhatsNew/1.1.1/1.2.0`）。这期间可以用本地 podspec 验证：
 >
 > ```ruby
 > pod 'KuiklyWhatsNew', :podspec => './KuiklyWhatsNew.podspec'
 > ```
 >
-> 1.1.1 时的实测是索引更新后 `pod install` 正常解析
-> （`Installing KuiklyWhatsNew (1.1.1)` + `OpenKuiklyIOSRender (2.30.0)`，
-> `Pods/KuiklyWhatsNew/WhatsNew.xcframework` 两个切片就位）。
+> 索引更新后，干净目录 + 仅 Podfile（`pod 'KuiklyWhatsNew', '~> 1.2.0'`）
+> 执行 `pod install --repo-update` 已实测成功。
 
 pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用，故发布名为
 `KuiklyWhatsNew`；framework 名与代码 `import` 不受影响。
@@ -143,3 +143,7 @@ pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用�
   `kotlin-js-store/yarn.lock` 已提交，避免 `Lock file was changed` 失败。
 - `OpenKuiklyIOSRender` 依赖在本地 lint 时通过 `git url.insteadOf` 指向一份
   `core-render-ios` 子集仓库，以规避 `github.com` 拉取超时；正式 lint / push 使用 trunk 上的 2.30.0。
+- 鸿蒙未验证：`core-render-ohos` **没有发布到 Maven Central，Tencent 镜像上也没有**
+  （`maven-metadata.xml` 404），它由 KuiklyUI 仓库的 C++ / ArkTS 源码构建；
+  `ohosArm64` 目标还需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`。
+  因此 `whatsnew/build.ohos.gradle.kts` 只声明 DSL 层 `core`，render 层由宿主的鸿蒙工程提供。
