@@ -77,11 +77,13 @@ current=1.2.0 persistent=false title=What's New
 
 产物路径：`miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip`。
 
-> 本机没有微信开发者工具，也没有 Kuikly 官方 `h5App-js` / `miniApp-js` 壳工程的构建产物，
-> 因此**未做真机 / 真浏览器渲染验证**。已完成的验证是：库在 JS 工具链上编译通过、
-> 逻辑层单测通过、含 `WhatsNewView` 的页面能被 KSP 注册并 webpack 打成 bundle。
-> 把该 bundle 放进官方壳工程后即可在微信开发者工具 / 浏览器中预览，步骤见
-> [MINIAPP_zh.md](MINIAPP_zh.md)。
+> 本机没有微信开发者工具，因此**微信小程序容器里未做渲染验证**。已完成的验证是：
+> 库在 JS 工具链上编译通过、逻辑层单测通过、含 `WhatsNewView` 的页面能被 KSP 注册并
+> webpack 打成 bundle。
+>
+> H5 部分已经用同一份 bundle 在 Chromium + `core-render-web` 里跑起来了，
+> 截图见 [3.4](#34-h5-真实渲染截图)。把该 bundle 放进微信开发者工具后即可在小程序里预览，
+> 步骤见 [MINIAPP_zh.md](MINIAPP_zh.md)。
 
 ## 3.2 Android 真实渲染截图（1.2.2）
 
@@ -128,6 +130,55 @@ adb exec-out screencap -p > docs/images/android-02-caught-up.png
 
 > `lines(0)` 在 Android 上等价于 `TextView.setMaxLines(0)`，整段文字会直接不显示，
 > 所以这里用的是 `lines(10)`。
+
+## 3.4 H5 真实渲染截图
+
+| 截图 | 说明 |
+|------|------|
+| <img src="images/h5-01-whatsnew.png" width="240"> | 与 Android 同一份 `WhatsNewDemoPage`，在 Chromium 里由 Kuikly 的 `core-render-web` 渲染 |
+| <img src="images/h5-02-caught-up.png" width="240"> | 点「继续」→ 刷新：`localStorage` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，走「已经是最新版本」分支 |
+
+复现步骤（全部在本机跑通，没有依赖任何私有产物）：
+
+```bash
+# 1. 从 KuiklyUI 源码构建 H5 渲染器（core-render-web 没有发布到 Maven / npm）
+#    源码里没有 settings.gradle.kts，需要自己补一个，只 include core-render-web
+cd KuiklyUI
+KUIKLY_VERSION=2.4.0 KUIKLY_KOTLIN_VERSION=2.0.21 \
+  ./gradlew :core-render-web:h5:jsBrowserDevelopmentWebpack
+# → core-render-web/h5/build/kotlin-webpack/js/developmentExecutable/KuiklyCore-render-web-h5.js
+
+# 2. 打业务 bundle（和微信小程序用的是同一条命令）
+./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage
+# → miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip 里的 nativevue2.js
+
+# 3. 放进官方 h5App-js 壳
+h5App-js/src/libs/KuiklyCore-render-web-h5.js
+h5App-js/src/bundles/WhatsNewDemoPage.bundle.js
+node scripts/generate-manifest.js && npm run build:dev
+python3 -m http.server 8099 --directory build/distributions
+# 打开 http://127.0.0.1:8099/?page_name=WhatsNewDemoPage
+```
+
+### 3.4.1 为了跑起来打的两处本地补丁
+
+这两处都在 **本地壳工程** 里，不在 `:whatsnew` 库代码里，也不影响发布产物：
+
+1. **Kotlin/JS 2.0.21 的 `@JsExport` 导出 bug**
+   渲染器加载时 `$jsExportAll$` 会引用三个从未声明的符号
+   （`isJsArray$outlinedJsCode$` / `jsObjectOwnKeys$outlinedJsCode$` /
+   `maybeStartAutoResizeForwarder$outlinedJsCode$`），直接抛 `ReferenceError`，
+   导致所有 `@JsExport` 导出都挂不到 `window` 上。这三个符号运行期不会被调用，
+   在 `KuiklyCore-render-web-h5.js` 前面补三个空实现即可。
+
+2. **`window.com` 会被页面 bundle 覆盖**
+   渲染器和业务 bundle 都是 UMD，都会执行 `for (var i in a) root[i] = a[i]`。
+   业务 bundle 后加载，会把渲染器写入的 `window.com` 换成自己那份（只有 `core`）。
+   所以在渲染器文件末尾把 `com.tencent.kuikly.core.render.web` 存到
+   `window.__kuiklyRenderWebModule`，让壳去读这个引用。
+
+另外 `window.kotlin` 在 UMD 包里不会暴露到全局，壳里的 `SizeI` 用的是渲染器导出的
+构造器，所以不需要 Kotlin stdlib 全局对象。
 
 ## 4. iOS 分发
 
@@ -202,3 +253,37 @@ pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用�
   （`maven-metadata.xml` 404），它由 KuiklyUI 仓库的 C++ / ArkTS 源码构建；
   `ohosArm64` 目标还需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`。
   因此 `whatsnew/build.ohos.gradle.kts` 只声明 DSL 层 `core`，render 层由宿主的鸿蒙工程提供。
+
+## 6. 1.2.2 发布记录
+
+1.2.2 是**行为性 bug 修复**：1.2.1 在 Android 上 `WhatsNewView` 根本渲染不出来（见 3.3）。
+
+| 检查项 | 命令 / 地址 | 结果 |
+|--------|-------------|------|
+| Android 单测 | `./gradlew :whatsnew:testDebugUnitTest` | ✅ 14 tests / 0 failures |
+| JS 单测 | `./gradlew :whatsnew:jsNodeTest` | ✅ 23 tests / 0 failures |
+| 四目标编译 | `:whatsnew:compileDebugKotlinAndroid`、`compileKotlinJs`、`compileKotlinIosX64`、`compileKotlinIosArm64`、`compileKotlinIosSimulatorArm64` | ✅ 全部 BUILD SUCCESSFUL |
+| Android 真实渲染 | `:androidApp:assembleDebug` + AVD 截图 | ✅ 见 3.2 |
+| XCFramework | `./gradlew :whatsnew:assembleWhatsNewXCFramework` | ✅ 5m34s，`WhatsNew.xcframework`（含 `ios-arm64` + `ios-arm64_x86_64-simulator`） |
+| GitHub Release | `https://github.com/Richard102257/kuikly-whatsnew-kit/releases/tag/v1.2.2` | ✅ `WhatsNew.xcframework.zip` 5,489,382 B，sha256 `00979ff05a84c01be3d8c7b6ab61c7b95541d8c65480344f30afaf6411560e18` |
+| JitPack | `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.2.2` | ✅ build `ok`；`whatsnew-1.2.2.pom` 200、`whatsnew-android-1.2.2.aar` 200 (76,226 B)、`whatsnew-js-1.2.2.klib` 200 (75,837 B) |
+| CocoaPods trunk | `pod trunk push KuiklyWhatsNew.podspec` | ✅ 已发布；trunk API `versions` 含 `1.2.2`，CDN spec 200 |
+
+对应提交：`b2e6893`（tag `v1.2.2`）。
+
+### 6.1 关于 iOS pod 的说明
+
+`pod spec lint` 通过（`KuiklyWhatsNew (1.2.2)` 校验成功，XCFramework 从 Release 下载解压后
+在 iOS 18.2 模拟器上编译通过）。trunk 推送第一次遇到 `Net::OpenTimeout`（本机到
+`trunk.cocoapods.org` 的网络抖动，不是 spec 问题），重试后成功：
+
+```
+$ curl -s https://trunk.cocoapods.org/api/v1/pods/KuiklyWhatsNew
+versions = ['1.1.1', '1.2.0', '1.2.1', '1.2.2']
+
+$ curl -sI https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.2.2/KuiklyWhatsNew.podspec.json
+200
+```
+
+推送结束时 `pod` 会打印 `Calling the GitHub commit API timed out` —— 那是 trunk 把 spec
+镜像到 GitHub 仓库的后续步骤受 `github.com:443` 超时影响，**版本已经发布成功**。

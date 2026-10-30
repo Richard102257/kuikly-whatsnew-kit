@@ -15,17 +15,31 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 
 ## 📸 运行截图
 
-下面两张图是 **Kuikly 在 Android 模拟器上真实渲染**出来的画面（不是原生 View 仿写、
-也不是设计稿）。渲染的页面代码就是 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt)
-里那份 —— 和小程序 / H5 编译成 JS 的是同一份代码。
+所有截图都是 **Kuikly 真实渲染**出来的画面（不是原生 View 仿写、也不是设计稿）。
+渲染的页面代码是 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt)
+里那份 —— Android 和 H5 跑的是同一份 commonMain 代码，H5 就是把它编译成 JS 后
+放进 Kuikly 官方 `h5App-js` 壳里。
+
+### Android（模拟器，Kuikly `2.4.0-2.0.21`）
 
 | 首次启动：展示 What's New | 点「继续」后再次启动：已是最新版本 |
 |---|---|
 | <img src="docs/images/android-01-whatsnew.png" width="320" alt="Android WhatsNew 首屏"> | <img src="docs/images/android-02-caught-up.png" width="320" alt="Android 已是最新版本"> |
 
-截图对应的行为链路：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 → 点击主按钮
-写入 `SharedPreferences` → 杀进程重启后 `whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。
-也就是说这两张图同时验证了**渲染**和**版本持久化**。
+### H5（Chromium，`core-render-web` 渲染器）
+
+| 首次启动：展示 What's New | 点「继续」后刷新：已是最新版本 |
+|---|---|
+| <img src="docs/images/h5-01-whatsnew.png" width="320" alt="H5 WhatsNew 首屏"> | <img src="docs/images/h5-02-caught-up.png" width="320" alt="H5 已是最新版本"> |
+
+截图对应的行为链路（两端一致）：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 →
+点击主按钮写入本地存储（Android `SharedPreferences` / H5 `localStorage`）→ 重启 / 刷新后
+`whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。也就是说这些图同时验证了
+**渲染**和**版本持久化**。
+
+H5 这一套不是「一键跑起来」的：`core-render-web` 没有发布到 Maven / npm，渲染器要从
+KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地壳里绕过。
+完整命令和两处本地补丁见 [docs/VERIFICATION.md](docs/VERIFICATION.md#34-h5-真实渲染截图)。
 
 ### 各端截图状态（如实说明）
 
@@ -34,7 +48,7 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 | Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
 | iOS | ⏳ 未覆盖 | 库本身有 iOS target 并已发布 XCFramework，但本机没有可直接运行的 iOS Demo 工程 |
 | HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
-| H5 | ⏳ 未覆盖 | `core-render-web` 未发布到 Maven / npm，需要先从 KuiklyUI 源码构建渲染器 |
+| H5 | ✅ 已覆盖 | 上面的两张，Chromium + `core-render-web`（源码构建）+ 官方 `h5App-js` 壳 |
 | 微信小程序 | ⏳ 未覆盖 | 需要微信开发者工具（本机未安装） |
 
 > 没有截图的平台不是「没实现」，而是**当前环境跑不起来**。库的 commonMain 代码是
