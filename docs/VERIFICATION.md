@@ -60,7 +60,7 @@ current=1.2.0 persistent=false title=What's New
 
 ## 3. Demo 工程
 
-- `:androidApp:assembleDebug` → ✅ `androidApp-debug.apk`（6.4 MB）
+- `:androidApp:assembleDebug` → ✅ `androidApp-debug.apk`（6.72 MB，Kuikly 依赖全部解析到 `2.4.0-2.0.21`）
 - `:shared:compileKotlinIosArm64`（Demo 共享代码依赖 `project(":whatsnew")`）→ ✅ BUILD SUCCESSFUL
 
 ## 3.1 小程序 / H5
