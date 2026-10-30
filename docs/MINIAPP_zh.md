@@ -212,7 +212,7 @@ internal class HomePage : Pager() {
 # 单 bundle（内置到小程序主包 / H5 静态资源）
 ./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage
 
-# 分包（配合 miniApp-js / h5App-js 的按需加载）
+# 分包（配合 miniApp / h5App-js 的按需加载）
 ./gradlew :miniApp:packSplitJSBundleDebug -PpageNameList=WhatsNewDemoPage
 ```
 
@@ -226,21 +226,41 @@ miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip
 
 ### 2.5 装进微信小程序
 
-微信小程序的容器代码由 Kuikly 官方的 `miniApp-js` 工程提供（它负责
-`wx` 侧的 wxml 模板、自定义组件、事件转发、模块桥接）：
+微信小程序的容器代码由 Kuikly 官方的 `miniApp` 工程提供（它负责 `wx` 侧的
+wxml 模板、自定义组件、事件转发、模块桥接）。本仓库验证过的路径是：
 
 1. `git clone https://github.com/Tencent-TDS/KuiklyUI`
-2. `cd KuiklyUI/miniApp-js && npm install && npm run build`
-3. 把上一步的 `nativevue2.js` 放进 `miniApp-js/src/bundles/`，重新 `npm run build`
-4. 微信开发者工具导入 `miniApp-js/dist`，填写 AppID（可用测试号）
-5. `dist/pages/index/index.js` 里指定页面名：
+2. 在 KuiklyUI 的 `settings.gradle.kts` 里 include `:core-render-web:miniapp` 和 `:miniApp`，
+   然后编渲染入口：
 
-```javascript
-var render = global.render
-render.renderView({ pageName: "WhatsNewDemoPage" })
-```
+   ```bash
+   ./gradlew kotlinUpgradeYarnLock :miniApp:jsBrowserDevelopmentWebpack
+   # → miniApp/build/kotlin-webpack/js/developmentExecutable/miniprogramApp.js
+   ```
+
+   > 不要直接用 `:core-render-web:miniapp` 的产物：它只导出 `kotlin` / `com`，
+   > 官方壳要的 `renderView` / `initApp` / `fontLoaded` 在 `:miniApp` 的 `Main.kt` 里。
+
+3. 把业务 bundle `nativevue2.js` 放进壳的 `business/`，渲染器放进 `lib/miniprogramApp.js`：
+
+   ```bash
+   cp .../miniprogramApp.js  <shell>/lib/miniprogramApp.js
+   unzip -p .../nativevue2.zip nativevue2.js > <shell>/business/nativevue2.js
+   ```
+
+4. 壳的 `app.json` 只保留 `pages/index/index`；`pages/index/index.js` 指定页面名：
+
+   ```javascript
+   var render = require('../../lib/miniprogramApp.js')
+   render.renderView({ pageName: "WhatsNewDemoPage" })
+   ```
+
+5. 微信开发者工具「导入项目」→ 选择壳目录 → 点「测试号」→ 创建 → Trust & Run。
+   CLI 的 `open --project` 会拿 `project.config.json` 里的 AppID 去服务端校验，
+   测试号只能走 IDE 的导入流程。
 
 H5 同理，壳工程换成 `h5App-js`（`npm run dev` 起本地服务，`?page_name=WhatsNewDemoPage`）。
+完整命令和踩坑记录见 [VERIFICATION.md 3.6](VERIFICATION.md#36-微信小程序真实渲染截图)。
 
 ---
 
@@ -251,7 +271,7 @@ H5 同理，壳工程换成 `h5App-js`（`npm run dev` 起本地服务，`?page_
 ```
 miniApp/
 ├── build.gradle.kts                                  # js + android 目标，Kuikly 插件 + KSP
-├── src/jsMain/kotlin/.../WhatsNewDemoPage.kt         # @Page("WhatsNewDemoPage") + WhatsNewView
+├── src/commonMain/kotlin/.../WhatsNewDemoPage.kt     # @Page("WhatsNewDemoPage") + WhatsNewView
 └── README.md
 ```
 
@@ -262,6 +282,10 @@ miniApp/
 ./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage
 # → miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip (nativevue2.js ≈ 1.87 MB)
 ```
+
+并且已经在微信开发者工具里真实渲染、截图（不是只编过）：
+首屏展示 What's New → 点「继续」写入 `wx.setStorageSync` → 重新进入走
+「已经是最新版本」分支。截图见 [README](../README.md#微信小程序微信开发者工具iphone-1213-pro-模拟器)。
 
 KSP 生成的入口里可以看到页面注册：
 

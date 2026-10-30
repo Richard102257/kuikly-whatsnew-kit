@@ -73,17 +73,17 @@ current=1.2.0 persistent=false title=What's New
 |--------|------|------|
 | 业务模块编译 | `./gradlew :miniApp:compileKotlinJs` | ✅ BUILD SUCCESSFUL |
 | KSP 页面注册 | 查看 `miniApp/build/generated/ksp/js/jsMain/kotlin/KuiklyCoreEntry.kt` | ✅ 含 `BridgeManager.registerPageRouter("WhatsNewDemoPage")` |
-| 打包 bundle | `./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage` | ✅ `nativevue2.zip`（`nativevue2.js` 1,872,375 B） |
+| 打包 bundle | `./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage` | ✅ `nativevue2.zip`（`nativevue2.js` 1,872,859 B） |
 
 产物路径：`miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip`。
 
-> 本机没有微信开发者工具，因此**微信小程序容器里未做渲染验证**。已完成的验证是：
-> 库在 JS 工具链上编译通过、逻辑层单测通过、含 `WhatsNewView` 的页面能被 KSP 注册并
-> webpack 打成 bundle。
+> 小程序容器里已经完成真实渲染验证：同一份 bundle 放进 Kuikly 官方 `miniApp` 壳，
+> 用微信开发者工具的「测试号」打开，`WhatsNewDemoPage` 正常渲染、点「继续」后
+> `wx.setStorageSync` 落盘、重新进入走「已经是最新版本」分支。
+> 截图和完整步骤见 [3.6](#36-微信小程序真实渲染截图)。
 >
-> H5 部分已经用同一份 bundle 在 Chromium + `core-render-web` 里跑起来了，
-> 截图见 [3.4](#34-h5-真实渲染截图)。把该 bundle 放进微信开发者工具后即可在小程序里预览，
-> 步骤见 [MINIAPP_zh.md](MINIAPP_zh.md)。
+> H5 用同一份 bundle 在 Chromium + `core-render-web` 里也跑通了，
+> 截图见 [3.4](#34-h5-真实渲染截图)。
 
 ## 3.2 Android 真实渲染截图（1.2.2）
 
@@ -250,6 +250,71 @@ xcrun simctl io booted screenshot ios-02-caught-up.png
 另外，Kuikly 的视图树默认不导出 accessibilityIdentifier，所以
 `iosAppUITests/WhatsNewUITests.swift` 用归一化坐标（`dy = 0.885`）点主按钮 —— 点的是
 真实屏幕位置，不是伪造状态。
+
+## 3.6 微信小程序真实渲染截图
+
+| 截图 | 说明 |
+|------|------|
+| <img src="images/miniapp-01-whatsnew.png" width="240"> | 微信开发者工具，iPhone 12/13 Pro 模拟器；与 H5 完全相同的 `nativevue2.js`，由 `core-render-web:miniapp` 渲染 |
+| <img src="images/miniapp-02-caught-up.png" width="240"> | 点「继续」→ 重新进入页面：`wx.setStorageSync` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，走「已经是最新版本」分支 |
+
+### 3.6.1 复现步骤
+
+```bash
+# 1. 编小程序渲染器入口（注意不是 :core-render-web:miniapp）
+#    :core-render-web:miniapp 只导出 kotlin / com，官方壳要的 renderView / initApp / fontLoaded
+#    在 KuiklyUI 的 :miniApp 模块里（miniApp/src/jsMain/kotlin/Main.kt）
+cd KuiklyUI
+# settings.gradle.kts 里 include(":core-render-web:miniapp") 和 include(":miniApp")
+./gradlew kotlinUpgradeYarnLock :miniApp:jsBrowserDevelopmentWebpack
+# → miniApp/build/kotlin-webpack/js/developmentExecutable/miniprogramApp.js
+
+# 2. 打业务 bundle（和 H5 同一条命令）
+cd /path/to/kuikly-whatsnew-kit
+./gradlew :miniApp:packLocalJSBundleDebug -PpageNameList=WhatsNewDemoPage
+# → miniApp/build/outputs/kuikly/js/debug/local/nativevue2.zip
+
+# 3. 组装官方 miniApp 壳
+#    壳文件来自 KuiklyUI 的 miniApp/dist（app.js / base.wxml / comp.* / custom-wrapper.* /
+#    utils.wxs / assets），然后：
+cp .../miniprogramApp.js  wxshell/lib/miniprogramApp.js
+unzip -p .../nativevue2.zip nativevue2.js > wxshell/business/nativevue2.js
+# app.json: pages 只留 pages/index/index；window.navigationStyle 用 default
+# pages/index/index.js: render.renderView({ pageName: "WhatsNewDemoPage" })
+
+# 4. 用开发者工具打开（AppID 用「测试号」）
+#    手动：导入项目 → 选择 wxshell 目录 → 点「测试号」→ 创建 → Trust & Run
+#    本机用 CLI 直接 open 会报 "Login user is not the developer" / "There is no such AppID"，
+#    因为 CLI 会拿 project.config.json 里的 AppID 去服务端校验；测试号只能走 IDE 的导入流程。
+
+# 5. 开自动化并截图
+"/Applications/wechatwebdevtools.app/Contents/MacOS/cli" auto \
+  --project "$PWD/wxshell" --auto-port 9420
+node wxtap.js   # miniprogram-automator: mp.screenshot({path}) + page.$$('view') 找到「继续」并 tap
+```
+
+### 3.6.2 踩到的坑
+
+1. **`render.initApp is not a function`**
+   直接把 `core-render-web:miniapp` 的 webpack 产物当 `lib/miniprogramApp.js` 用会白屏。
+   那个产物导出的是 `{ kotlin, com }`，`renderView` / `initApp` / `fontLoaded` 是
+   `:miniApp` 模块 `Main.kt` 里的 `@JsExport` 包装。必须编 `:miniApp:jsBrowserDevelopmentWebpack`，
+   产物文件名正好是 `miniprogramApp.js`。
+
+2. **`navigationStyle: custom` 会把标题顶到状态栏里**
+   官方 demo 壳默认是 `custom`，页面自己不管安全区时标题会压在刘海下面。
+   这次把 `app.json` 的 `window.navigationStyle` 改成 `default`，让微信原生导航栏占位；
+   内容区仍由 Kuikly 渲染。如果坚持 `custom`，需要在页面外层包 Kuikly 的 `SafeArea`。
+
+3. **「已是最新版本」要重新进入页面**
+   Demo 页的 `body()` 只在页面构建时读一次 `whatsNew()`，点「继续」只写存储、不会自动重排。
+   截图流程是 tap → `mp.reLaunch('/pages/index/index')` → 再截，验证的是存储真的落盘了，
+   不是把 UI 手动改掉。
+
+4. **自动化端口**
+   `cli auto` 会打印 `autoPort`；`miniprogram-automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })`
+   连上后 `mp.screenshot()` 拿到的是开发者工具模拟器画面（640×1386），不是 macOS 截屏。
+   开发者工具主窗口是 `NSWindowSharingNone`，`screencapture` 截不到它，必须走 automator。
 
 ## 4. iOS 分发
 

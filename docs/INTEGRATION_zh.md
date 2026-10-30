@@ -18,7 +18,7 @@ Android / iOS / HarmonyOS / Web / 微信小程序共用同一份代码，不需�
 | **iOS** | ① CocoaPods ② 源码模块 | 无 | 本页 |
 | **鸿蒙** | 源码模块 | ① `whatsNewCurrentVersionOverride` ② 页面内用 `createWhatsNewVersionStore()` | 本页「六、平台初始化」 |
 | **H5** | JitPack（js klib） | `js(IR) { binaries.executable() }` + Kuikly 插件 + `h5App-js` 壳 | [MINIAPP_zh.md](MINIAPP_zh.md) |
-| **微信小程序** | JitPack（js klib） | 同上 + `miniApp-js` 壳 | [MINIAPP_zh.md](MINIAPP_zh.md) |
+| **微信小程序** | JitPack（js klib） | 同上 + `miniApp` 壳 | [MINIAPP_zh.md](MINIAPP_zh.md) |
 
 ---
 
@@ -130,7 +130,7 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
 ```
 
 还需要 `js(IR) { binaries.executable() }` + Kuikly Gradle 插件 + KSP，
-以及 Kuikly 官方的 `h5App-js` / `miniApp-js` 壳工程来加载 bundle。
+以及 Kuikly 官方的 `h5App-js` / `miniApp` 壳工程来加载 bundle。
 
 👉 完整步骤见 [MINIAPP_zh.md](MINIAPP_zh.md)。
 
