@@ -16,6 +16,9 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 ## 📸 运行截图
 
 所有截图都是 **Kuikly 真实渲染**出来的画面（不是原生 View 仿写、也不是设计稿）。
+首屏都是「宿主 App 界面 + 盖在上面的 What's New 弹层」：40% 黑遮罩 + 居中圆角卡片，
+对应 WhatsNewKit 的 `present(whatsNewViewController)`；点「继续」后弹层消失，宿主界面顶部
+显示「已经是最新版本」。
 所有端渲染的都是同一份 `:whatsnew` commonMain 组件代码：
 
 - Android / H5 / 微信小程序 跑 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt) 里的页面（H5 是把这份代码编译成 JS 后放进 Kuikly 官方 `h5App-js` 壳；小程序是同一份 JS bundle 放进 Kuikly 官方 `miniApp` 壳）
@@ -35,7 +38,8 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 
 iOS 侧是官方 `OpenKuiklyIOSRender` 渲染器 + Kotlin/Native framework，版本号直接读
 `CFBundleShortVersionString`（Info.plist 里是 `1.2.0`），存储走 `NSUserDefaults`。
-页面用 Kuikly 的 `SafeArea` 避开灵动岛和底部横条，其余布局与 Android / H5 完全一致。
+宿主界面用 Kuikly 的 `SafeArea` 避开灵动岛和底部横条，弹层放在 `SafeArea` 外面（否则遮罩
+盖不到状态栏）；其余布局与 Android / H5 完全一致。
 
 ### H5（Chromium，`core-render-web` 渲染器）
 
@@ -59,13 +63,18 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 内容区由 Kuikly 渲染；截图里的胶囊按钮、状态栏、Home Indicator 都是开发者工具真实模拟的。
 
 截图对应的行为链路（四端一致）：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 →
-点击主按钮写入本地存储（Android `SharedPreferences` / iOS `NSUserDefaults` / H5 `localStorage` / 小程序 `wx.setStorageSync`）→
-重启 / 刷新 / 重新进入后 `whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。也就是说这些图
-同时验证了**渲染**和**版本持久化**。
+把 `WhatsNewOverlay`（遮罩 + 居中卡片）盖在宿主界面上 → 点击卡片里的主按钮写入本地存储
+（Android `SharedPreferences` / iOS `NSUserDefaults` / H5 `localStorage` / 小程序 `wx.setStorageSync`）→
+重启 / 刷新 / 重新进入后 `whatsNew()` 返回 `null`，弹层不再出现，宿主界面顶部显示「已经是最新版本」。
+也就是说这些图同时验证了**弹层渲染**和**版本持久化**。
 
 > iOS 的「点继续」不是手工点的：`iosApp/iosAppUITests` 里的 UI 测试用归一化坐标真点了一下
-> 页面底部的按钮，然后再重启 App 截图。命令见
+> 卡片上的主按钮，然后再重启 App 截图。命令见
 > [docs/VERIFICATION.md](docs/VERIFICATION.md#35-ios-真实渲染截图)。
+>
+> ⚠️ 目前 iOS 的第二张（`ios-02-caught-up.png`）还是弹层改造前拍的整页布局：这一轮重截时
+> 本机屏幕被锁，`xcodebuild test` / `simctl` 都起不来，只有第一张是新版。解除锁屏后按
+> VERIFICATION 3.5.1 的第 4、5 步重拍即可（Android / H5 / 小程序的三对图都是新版的弹层）。
 
 小程序侧还要额外编一个 `:miniApp` 渲染入口（官方壳要的 `renderView` / `initApp` /
 `fontLoaded` 都在这个模块里，`core-render-web:miniapp` 本身只导出 `kotlin` / `com`），
@@ -77,7 +86,7 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 | 平台 | 截图 | 说明 |
 |------|------|------|
 | Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
-| iOS | ✅ 已覆盖 | 上面的两张，iPhone 16 Pro 模拟器（iOS 18.3）+ Kotlin/Native `shared.framework` + `OpenKuiklyIOSRender` |
+| iOS | ✅ 已覆盖 | 第一张是新版弹层；第二张仍是改造前的整页布局，重拍步骤见 VERIFICATION 3.5.1 |
 | HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
 | H5 | ✅ 已覆盖 | 上面的两张，Chromium + `core-render-web`（源码构建）+ 官方 `h5App-js` 壳 |
 | 微信小程序 | ✅ 已覆盖 | 上面的两张，微信开发者工具 + `core-render-web:miniapp`（源码构建）+ 官方 `miniApp` 壳，测试号 AppID |
@@ -190,6 +199,7 @@ val environment = WhatsNewEnvironment(
 ## ✨ Features
 
 - ✅ **One codebase, all platforms** — Android、iOS、HarmonyOS、H5、微信小程序共用同一份 Kuikly DSL 代码
+- ✅ **Modal presentation** — `WhatsNewOverlay` 提供遮罩 + 居中圆角卡片，像 WhatsNewKit 一样盖在宿主界面上
 - ✅ **Kuikly DSL + Compose 页面** — `WhatsNewView` 用于 Kuikly DSL；Compose 页面用 `WhatsNewComposeState` 控制展示
 - ✅ **Manual & Automatic presentation** — Full control or let the environment handle it
 - ✅ **Version tracking** — 可插拔的 `WhatsNewVersionStore`（内存 / 平台持久化 / 自定义）
@@ -286,7 +296,8 @@ val whatsNew = whatsNew {
 
 ### 3. Kuikly DSL Usage
 
-`WhatsNewView` 是一个普通的 `ViewContainer`，在任何 `body(): ViewBuilder` 里 `addChild` 即可：
+默认的呈现方式和 WhatsNewKit 一致：**弹层盖在宿主界面上**。`WhatsNewOverlay` 是一层
+半透明遮罩 + 居中圆角卡片，`addChild` 在宿主界面之后就会盖在它上面：
 
 ```kotlin
 import io.github.Richard102257.whatsnew.*
@@ -294,12 +305,50 @@ import com.tencent.kuikly.core.base.ViewBuilder
 import com.tencent.kuikly.core.pager.Pager
 
 class MyPager : Pager() {
+    private val environment = WhatsNewEnvironment(
+        versionStore = createPersistentWhatsNewVersionStore(),
+        whatsNewCollection = myWhatsNewCollection
+    )
+
     override fun body(): ViewBuilder = {
-        addChild(WhatsNewView()) {
-            setup(whatsNew) {
-                // 用户点击主按钮 / 关闭
+        val pending = environment.whatsNew()
+
+        // 1. 宿主 App 自己的界面
+        addChild(MainContentView())
+
+        // 2. 有新版本时盖一层弹层
+        if (pending != null) {
+            addChild(WhatsNewOverlay()) {
+                present(pending) { environment.markAsPresented(pending.version) }
             }
         }
+    }
+}
+```
+
+`present()` 的参数都有默认值，需要改样式时再传：
+
+```kotlin
+addChild(WhatsNewOverlay()) {
+    present(
+        whatsNew = pending,
+        dimColor = 0x66000000,      // 遮罩颜色，默认 40% 黑
+        cardCornerRadius = 28f,     // 卡片圆角
+        horizontalInset = 20f,      // 卡片左右留白
+        verticalInset = 72f,        // 卡片上下留白
+    ) { environment.markAsPresented(pending.version) }
+}
+```
+
+> 弹层没有挂「点遮罩关闭」：Kuikly 的 `click` 会从子视图冒泡到遮罩，点卡片里的按钮会
+> 同时触发按钮和遮罩两个回调。需要这个交互时，在宿主里单独加一层只覆盖卡片外区域的可点区域。
+
+只想整页展示（不需要遮罩）时，直接 `addChild(WhatsNewView())` 即可：
+
+```kotlin
+addChild(WhatsNewView()) {
+    setup(whatsNew) {
+        // 用户点击主按钮 / 关闭
     }
 }
 ```

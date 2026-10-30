@@ -22,6 +22,8 @@ class IOSWhatsNewVersionStore(
 ) : WhatsNewVersionStore {
 
     override fun savePresentedVersion(version: String) {
+        // 幂等：同一个版本重复保存时不重复追加到 presented_all
+        if (defaults.boolForKey("presented_$version")) return
         defaults.setBool(true, "presented_$version")
         val current = defaults.stringForKey("presented_all") ?: ""
         val updated = if (current.isEmpty()) version else "$current,$version"

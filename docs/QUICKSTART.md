@@ -89,14 +89,25 @@ class MyPage : Pager() {
     )
 
     override fun body(): ViewBuilder = {
-        addChild(WhatsNewView()) {
-            setup(environment.whatsNew()) {
-                // 用户点了「Continue」之后的回调
+        val pending = environment.whatsNew()
+
+        // 宿主界面先画出来
+        addChild(MyHomeContent()) { }
+
+        // 有新版本：弹层盖在宿主界面上面（遮罩 + 居中卡片）
+        if (pending != null) {
+            addChild(WhatsNewOverlay()) {
+                present(pending) {
+                    // 用户点了「Continue」之后的回调
+                    environment.markAsPresented(pending.version)
+                }
             }
         }
     }
 }
 ```
+
+只想整页展示、不要遮罩时，用 `addChild(WhatsNewView()) { setup(pending) { ... } }`。
 
 ---
 

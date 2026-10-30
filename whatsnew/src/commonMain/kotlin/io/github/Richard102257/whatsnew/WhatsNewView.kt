@@ -33,6 +33,7 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
 
     private var whatsNew: WhatsNew? = null
     private var dismissHandler: (() -> Unit)? = null
+    private var cardCornerRadius: Float = 0f
 
     override fun createAttr() = ContainerAttr()
     override fun createEvent() = Event()
@@ -41,23 +42,38 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
 
     /**
      * 绑定 WhatsNew 数据并渲染
+     *
+     * @param cornerRadius 大于 0 时把整块内容画成圆角卡片（配合 [WhatsNewOverlay] 使用）
      */
-    fun setup(whatsNew: WhatsNew, onDismiss: (() -> Unit)? = null) {
+    fun setup(
+        whatsNew: WhatsNew,
+        cornerRadius: Float = 0f,
+        onDismiss: (() -> Unit)? = null,
+    ) {
         this.whatsNew = whatsNew
+        this.cardCornerRadius = cornerRadius
         this.dismissHandler = onDismiss
         renderWhatsNew(whatsNew)
     }
 
     private fun renderWhatsNew(whatsNew: WhatsNew) {
         val layout = whatsNew.layout
+        val radius = cardCornerRadius
 
         // ─── 根容器 ───
         attr {
-            flex(1f)
             flexDirection(FlexDirection.COLUMN)
             justifyContent(FlexJustifyContent.FLEX_START)
             alignItems(FlexAlign.STRETCH)
             backgroundColor(0xFFFFFFFF)
+            if (radius > 0f) {
+                // 卡片模式：高度由内容撑开，交给 WhatsNewOverlay 居中
+                borderRadius(radius)
+                overflow(true)
+            } else {
+                // 整页模式：铺满宿主页面
+                flex(1f)
+            }
             padding(
                 top = layout.contentPadding.top,
                 left = layout.contentPadding.start,
@@ -95,10 +111,12 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
             attr { height(layout.titleBottomSpacing) }
         }
 
-        // ─── 功能列表（可滚动区域）───
+        // ─── 功能列表（整页模式下占满剩余高度并可滚动；卡片模式下按内容撑开）───
         addChild(DivView()) {
             attr {
-                flex(1f)
+                if (radius <= 0f) {
+                    flex(1f)
+                }
                 flexDirection(FlexDirection.COLUMN)
                 alignItems(FlexAlign.STRETCH)
                 overflow(true)

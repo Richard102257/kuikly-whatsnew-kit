@@ -90,7 +90,10 @@ class WhatsNewEnvironment(
     }
 
     fun markAsPresented(version: WhatsNewVersion) {
-        versionStore.savePresentedVersion(version.toString())
+        // 幂等：按钮点击可能冒泡到遮罩，重复调用不会写脏存储
+        val key = version.toString()
+        if (versionStore.hasPresented(key)) return
+        versionStore.savePresentedVersion(key)
     }
 
     fun hasPresented(version: WhatsNewVersion): Boolean {

@@ -93,8 +93,8 @@ current=1.2.0 persistent=false title=What's New
 
 | 截图 | 说明 |
 |------|------|
-| <img src="images/android-01-whatsnew.png" width="260"> | `WhatsNewView` 首屏：标题居中、3 条 feature（emoji 图标 + 标题 + 换行副标题）、次按钮「查看更新日志」、主按钮「继续」 |
-| <img src="images/android-02-caught-up.png" width="260"> | 点「继续」→ 杀进程重启：`whatsNew()` 返回 `null`，走「已经是最新版本 🎉 / 当前版本 1.2.0」分支 |
+| <img src="images/android-01-whatsnew.png" width="260"> | 宿主界面（`Kuikly WhatsNew` 标题 + 通用/通知/关于）+ `WhatsNewOverlay` 弹层：40% 黑遮罩、居中圆角卡片，卡片里是标题、3 条 feature、次按钮「查看更新日志」、主按钮「继续」 |
+| <img src="images/android-02-caught-up.png" width="260"> | 点「继续」→ 杀进程重启：`whatsNew()` 返回 `null`，弹层不再出现，宿主界面顶部显示「已经是最新版本 🎉 / 当前版本 1.2.0」 |
 
 复现命令：
 
@@ -108,8 +108,8 @@ adb shell pm clear io.github.Richard102257.whatsnew.demo
 adb shell am start -n io.github.Richard102257.whatsnew.demo/.MainActivity
 adb exec-out screencap -p > docs/images/android-01-whatsnew.png
 
-# 3. 点「继续」（1080x2400 上约 540,2175）→ 重启看持久化效果
-adb shell input tap 540 2175
+# 3. 点卡片上的「继续」（1080x2400 上按钮中心实测约 571,1653）→ 重启看持久化效果
+adb shell input tap 571 1653
 adb shell am force-stop io.github.Richard102257.whatsnew.demo
 adb shell am start -n io.github.Richard102257.whatsnew.demo/.MainActivity
 adb exec-out screencap -p > docs/images/android-02-caught-up.png
@@ -118,9 +118,9 @@ adb exec-out screencap -p > docs/images/android-02-caught-up.png
 环境：AVD `Medium_Phone_API_37.0`（Android 15 / API 37，x86_64）。
 
 > 这两张图在 2026-10-30 重新跑过一遍：冷启动模拟器 → 连上 `AndroidWifi`（状态栏是系统
-> 真实状态栏，不是 demo mode）→ `pm clear` → 截图 → `input tap` 点「继续」→
+> 真实状态栏，不是 demo mode）→ `pm clear` → 截图 → `input tap` 点弹层卡片上的「继续」→
 > `am force-stop` 后重启 → 截图。`shared_prefs/kuikly_whatsnew_store.xml` 里能看到
-> `presented_1.2.0=true` / `presented_all=1.2.0`，证明持久化真的落盘了。
+> `presented_1.2.0=true` / `presented_all=1.2.0`（单条，没有重复），证明持久化真的落盘了。
 >
 > GPU 选择上，`-gpu swiftshader_indirect` 在这台 Intel Mac 上会把 System UI 拖到 ANR
 > （截图里会弹出 "System UI isn't responding"），`-gpu host` 反而正常；如果你的机器
@@ -143,8 +143,8 @@ adb exec-out screencap -p > docs/images/android-02-caught-up.png
 
 | 截图 | 说明 |
 |------|------|
-| <img src="images/h5-01-whatsnew.png" width="240"> | 与 Android 同一份 `WhatsNewDemoPage`，在 Chromium 里由 Kuikly 的 `core-render-web` 渲染 |
-| <img src="images/h5-02-caught-up.png" width="240"> | 点「继续」→ 刷新：`localStorage` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，走「已经是最新版本」分支 |
+| <img src="images/h5-01-whatsnew.png" width="240"> | 与 Android 同一份 `WhatsNewDemoPage`，在 Chromium 里由 Kuikly 的 `core-render-web` 渲染；宿主界面 + `WhatsNewOverlay` 弹层 |
+| <img src="images/h5-02-caught-up.png" width="240"> | 点「继续」→ 刷新：`localStorage` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，弹层消失，宿主界面顶部显示「已经是最新版本」 |
 
 复现步骤（全部在本机跑通，没有依赖任何私有产物）：
 
@@ -166,6 +166,8 @@ h5App-js/src/bundles/WhatsNewDemoPage.bundle.js
 node scripts/generate-manifest.js && npm run build:dev
 python3 -m http.server 8099 --directory build/distributions
 # 打开 http://127.0.0.1:8099/?page_name=WhatsNewDemoPage
+# 截图：CDP 设 390x844 @2x，真实点一下卡片上的「继续」，再刷新截第二张
+node h5shot.js
 ```
 
 ### 3.4.1 为了跑起来打的两处本地补丁
@@ -185,6 +187,11 @@ python3 -m http.server 8099 --directory build/distributions
    所以在渲染器文件末尾把 `com.tencent.kuikly.core.render.web` 存到
    `window.__kuiklyRenderWebModule`，让壳去读这个引用。
 
+3. **H5 的 `stretch + 子视图 margin` 只扣左边距**
+   弹层最初用「遮罩 `alignItems(STRETCH)` + 卡片左右 `margin`」做留白，Android 正常，
+   H5 上卡片却从右边溢出屏幕、标题被裁掉。改成把留白做成遮罩自己的 `padding` 后三端一致。
+   这也是 `WhatsNewOverlay` 里用 padding 而不是 margin 的原因。
+
 另外 `window.kotlin` 在 UMD 包里不会暴露到全局，壳里的 `SizeI` 用的是渲染器导出的
 构造器，所以不需要 Kotlin stdlib 全局对象。
 
@@ -192,15 +199,22 @@ python3 -m http.server 8099 --directory build/distributions
 
 | 截图 | 说明 |
 |------|------|
-| <img src="images/ios-01-whatsnew.png" width="240"> | iPhone 16 Pro 模拟器（iOS 18.3），Kotlin/Native `shared.framework` + 官方 `OpenKuiklyIOSRender` 渲染 |
-| <img src="images/ios-02-caught-up.png" width="240"> | UI 测试真点了一下「继续」→ 重启 App：`NSUserDefaults` 里已有 `presented_all=1.2.0`，走「已经是最新版本」分支 |
+| <img src="images/ios-01-whatsnew.png" width="240"> | iPhone 16 Pro 模拟器（iOS 18.3），Kotlin/Native `shared.framework` + 官方 `OpenKuiklyIOSRender` 渲染；宿主界面 + `WhatsNewOverlay` 弹层 |
+| <img src="images/ios-02-caught-up.png" width="240"> | UI 测试真点了一下卡片上的「继续」→ 重启 App：`NSUserDefaults` 里已有 `presented_all=1.2.0`，弹层不再出现，宿主界面顶部显示「已经是最新版本」 |
+
+> ⚠️ **`ios-02` 还是弹层改造前的整页布局**（2026-10-30 17:07 那张）。弹层这一轮重截时
+> 这台机器的屏幕被锁了（`CGSSessionScreenIsLocked = 1`）：`xcodebuild test` 卡在
+> test session 启动前，`simctl boot` / `simctl install` 也一起挂住，所以第二张没能重拍。
+> `ios-01` 是新版（弹层）。解除锁屏后按 [3.5.1](#351-复现步骤) 的第 4、5 步跑一遍即可重拍，
+> 命令和 `dy` 坐标都已经写好了。
 
 页面源码是 [`shared/src/iosMain/.../WhatsNewIosDemoPage.kt`](../shared/src/iosMain/kotlin/io/github/Richard102257/whatsnew/shared/WhatsNewIosDemoPage.kt)，
 组件本身还是 `:whatsnew` 的 commonMain 代码。和 Android / H5 页面相比只差两点：
 
 - 不 override 版本号，直接读 `CFBundleShortVersionString`（Info.plist 写死 `1.2.0`）
-- 外层包了一个 Kuikly 的 `SafeArea`，否则标题会被灵动岛压住（`pagerData.safeAreaInsets`
-  在 iOS 上是真实值，Android / H5 上是 0）
+- 宿主界面外层包了一个 Kuikly 的 `SafeArea`，否则标题会被灵动岛压住（`pagerData.safeAreaInsets`
+  在 iOS 上是真实值，Android / H5 上是 0）；**弹层放在 `SafeArea` 外面**，否则遮罩只盖住安全区、
+  盖不到状态栏
 
 ### 3.5.1 复现步骤
 
@@ -222,14 +236,18 @@ xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
   -derivedDataPath build/DerivedData build
 
-# 4. UI 测试真点一下「继续」（写 NSUserDefaults）
+# 4. UI 测试真点一下卡片上的「继续」（写 NSUserDefaults）
+#    坐标 dy=0.745 是按 1206x2622 截图里紫色按钮中心（y≈1953px）算的
 xcodebuild test -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
-  -derivedDataPath build/DerivedData
+  -derivedDataPath build/DerivedData \
+  -only-testing:iosAppUITests/WhatsNewUITests/testTapPrimaryAction
 
 # 5. 重启 App 截「已是最新版本」
+xcrun simctl terminate booted io.github.Richard102257.whatsnew.demo
 xcrun simctl launch booted io.github.Richard102257.whatsnew.demo
-xcrun simctl io booted screenshot ios-02-caught-up.png
+sleep 6
+xcrun simctl io booted screenshot docs/images/ios-02-caught-up.png
 ```
 
 `pod install` 之后 Xcode 里那个 `Build shared` 脚本阶段会自动跑 Gradle 的 `syncFramework`；
@@ -263,8 +281,8 @@ xcrun simctl io booted screenshot ios-02-caught-up.png
 
 | 截图 | 说明 |
 |------|------|
-| <img src="images/miniapp-01-whatsnew.png" width="240"> | 微信开发者工具，iPhone 12/13 Pro 模拟器；与 H5 完全相同的 `nativevue2.js`，由 `core-render-web:miniapp` 渲染 |
-| <img src="images/miniapp-02-caught-up.png" width="240"> | 点「继续」→ 重新进入页面：`wx.setStorageSync` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，走「已经是最新版本」分支 |
+| <img src="images/miniapp-01-whatsnew.png" width="240"> | 微信开发者工具，iPhone 12/13 Pro 模拟器；与 H5 完全相同的 `nativevue2.js`，由 `core-render-web:miniapp` 渲染；宿主界面 + `WhatsNewOverlay` 弹层 |
+| <img src="images/miniapp-02-caught-up.png" width="240"> | 点「继续」→ 重新进入页面：`wx.setStorageSync` 里已有 `kuikly_whatsnew_presented_all=1.2.0`，弹层消失，宿主界面顶部显示「已经是最新版本」 |
 
 ### 3.6.1 复现步骤
 
@@ -298,7 +316,9 @@ unzip -p .../nativevue2.zip nativevue2.js > wxshell/business/nativevue2.js
 # 5. 开自动化并截图
 "/Applications/wechatwebdevtools.app/Contents/MacOS/cli" auto \
   --project "$PWD/wxshell" --auto-port 9420
-node wxtap.js   # miniprogram-automator: mp.screenshot({path}) + page.$$('view') 找到「继续」并 tap
+# miniprogram-automator: clearStorageSync → reLaunch → mp.screenshot()
+#   → page.$$('view') 找到卡片上的「继续」并 tap → 确认 storage → reLaunch → 再截
+node wxshot.js
 ```
 
 ### 3.6.2 踩到的坑

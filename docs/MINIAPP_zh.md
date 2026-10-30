@@ -160,9 +160,10 @@ buildscript {
 }
 ```
 
-### 2.3 页面写法：自己挂 `WhatsNewView`
+### 2.3 页面写法：宿主界面 + `WhatsNewOverlay` 弹层
 
-**推荐**在宿主自己的页面里 `addChild`，库不依赖宿主的路由：
+**推荐**在宿主自己的页面里 `addChild`，库不依赖宿主的路由。默认用法是先把宿主界面画出来，
+再把弹层盖上去（对应 WhatsNewKit 的 `present(whatsNewViewController)`）：
 
 ```kotlin
 @Page("HomePage")
@@ -181,18 +182,23 @@ internal class HomePage : Pager() {
 
     override fun body(): ViewBuilder = {
         val pending = this@HomePage.environment.whatsNew()
+
+        // 1. 宿主自己的界面（小程序里就是你的首页）
+        addChild(createHomeContent()) { }
+
+        // 2. 有新版本：弹层盖在上面
         if (pending != null) {
-            addChild(WhatsNewView()) {
-                setup(pending) {
+            addChild(WhatsNewOverlay()) {
+                present(pending) {
                     this@HomePage.environment.markAsPresented(pending.version)
                 }
             }
-        } else {
-            addChild(createHomeContent()) { }
         }
     }
 }
 ```
+
+不想要遮罩、整页展示时，把第 2 步换成 `addChild(WhatsNewView()) { setup(pending) { ... } }` 即可。
 
 > ⚠️ **`WhatsNewPage` 不能直接按名字路由打开。**
 > Kuikly 的 `@Page` 注解是 `SOURCE` 保留，且 KSP 只扫描**当前模块**源码，

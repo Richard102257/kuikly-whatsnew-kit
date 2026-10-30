@@ -33,6 +33,8 @@ class AndroidWhatsNewVersionStore(
 
     override fun savePresentedVersion(version: String) {
         val key = "presented_$version"
+        // 幂等：同一个版本重复保存时不重复追加到 presented_all
+        if (prefs.getBoolean(key, false)) return
         prefs.edit().putBoolean(key, true).apply()
         val allKey = "presented_all"
         val current = prefs.getString(allKey, "") ?: ""

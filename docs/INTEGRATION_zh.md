@@ -223,19 +223,24 @@ class HomePage : Pager() {
     override fun body(): ViewBuilder = {
         val pending = this@HomePage.environment.whatsNew()
 
+        // 1. 宿主界面先画出来
+        addChild(HomeContent()) { }
+
+        // 2. 有新版本：WhatsNewOverlay 盖在宿主界面上面（遮罩 + 居中卡片）
         if (pending != null) {
-            addChild(WhatsNewView()) {
-                setup(pending) {
+            addChild(WhatsNewOverlay()) {
+                present(pending) {
                     // 主按钮点击后：记录已展示
                     this@HomePage.environment.markAsPresented(pending.version)
                 }
             }
-        } else {
-            addChild(HomeContent()) { }
         }
     }
 }
 ```
+
+`WhatsNewOverlay.present()` 可以调 `dimColor` / `cardCornerRadius` / `horizontalInset` /
+`verticalInset`；不想要遮罩、整页展示时把第 2 步换成 `addChild(WhatsNewView()) { setup(pending) { ... } }`。
 
 ### 方式 B：独立页面（路由打开）
 
