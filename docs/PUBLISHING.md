@@ -31,16 +31,16 @@ install:
 发布步骤：
 
 ```bash
-git tag v1.2.2
-git push origin v1.2.2
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
-然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.2.2` 触发构建。
+然后访问 `https://jitpack.io/#Richard102257/kuikly-whatsnew-kit/v1.3.0` 触发构建。
 
 用户侧引用：
 
 ```kotlin
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
 ```
 
 本地验证构建：
@@ -65,8 +65,8 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
 >
 > 否则 JitPack 会以 `Lock file was changed` 失败。
 >
-> 验证产物：`whatsnew-js-1.2.2.klib` 与 `whatsnew-js-1.2.2.pom` 应能在
-> `https://jitpack.io/com/github/Richard102257/kuikly-whatsnew-kit/whatsnew-js/1.2.2/` 下 200 下载。
+> 验证产物：`whatsnew-js-1.3.0.klib` 与 `whatsnew-js-1.3.0.pom` 应能在
+> `https://jitpack.io/com/github/Richard102257/kuikly-whatsnew-kit/whatsnew-js/1.3.0/` 下 200 下载。
 
 ---
 
@@ -90,8 +90,8 @@ cd whatsnew/build/XCFrameworks/release
 cp ../../../LICENSE .
 zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework LICENSE
 
-gh release create v1.2.2 WhatsNew.xcframework.zip \
-  --title "v1.2.2" --notes "WhatsNew 1.2.2"
+gh release create v1.3.0 WhatsNew.xcframework.zip \
+  --title "v1.3.0" --notes "WhatsNew 1.3.0"
 ```
 
 > 少打 `LICENSE` 的后果：`pod spec lint` / `pod install` 会打印

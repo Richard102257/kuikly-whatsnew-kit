@@ -85,7 +85,7 @@ current=1.2.0 persistent=false title=What's New
 > H5 用同一份 bundle 在 Chromium + `core-render-web` 里也跑通了，
 > 截图见 [3.4](#34-h5-真实渲染截图)。
 
-## 3.2 Android 真实渲染截图（1.2.2）
+## 3.2 Android 真实渲染截图
 
 `:androidApp` 里新增 `KuiklyDemoActivity`，通过 Kuikly 官方的
 `KuiklyRenderViewBaseDelegator.onAttach` 渲染 `:miniApp` 的 `WhatsNewDemoPage` ——

@@ -114,7 +114,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
             }
         }
     }
@@ -143,7 +143,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.2.2'
+pod 'KuiklyWhatsNew', '~> 1.3.0'
 ```
 
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-KuiklyWhatsNew-red)](https://cocoapods.org/pods/KuiklyWhatsNew)
@@ -248,7 +248,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
             }
         }
     }
@@ -426,8 +426,8 @@ val whatsNew = WhatsNew(
 
 | Platform | 依赖方式 | Status |
 |----------|----------|--------|
-| Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
-| iOS | ① `pod 'KuiklyWhatsNew', '~> 1.2.2'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
+| Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
+| iOS | ① `pod 'KuiklyWhatsNew', '~> 1.3.0'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
 | HarmonyOS | 源码模块（无 Maven 产物） | ⚠️ 代码就绪，需 2 步手动配置，未实机验证 |
 | Web (H5) | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 第三方 `jsNodeRun` + 真实 Chromium 截图） |
 | Mini Programs | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 真实 bundle + 微信开发者工具截图） |

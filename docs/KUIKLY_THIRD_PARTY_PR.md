@@ -76,13 +76,13 @@ dependencyResolutionManagement {
 }
 
 // build.gradle.kts
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
 ```
 
 iOS 也可通过 CocoaPods 引入预编译 XCFramework：
 
 ```ruby
-pod 'KuiklyWhatsNew', '~> 1.2.2'
+pod 'KuiklyWhatsNew', '~> 1.3.0'
 ```
 
 > iOS 的 Kotlin/Native klib 只能在 macOS 上编译，所以 iOS 推荐把 `whatsnew`
@@ -106,23 +106,27 @@ val environment = WhatsNewEnvironment(
     }
 )
 
-// 在 Kuikly DSL 页面中
+// 在 Kuikly DSL 页面中：宿主界面 + 弹层（遮罩 + 居中卡片）
 override fun body(): ViewBuilder = {
-    addChild(WhatsNewView()) {
-        setup(environment.whatsNew())
+    val pending = environment.whatsNew()
+    addChild(HomeContent()) { }
+    if (pending != null) {
+        addChild(WhatsNewOverlay()) {
+            present(pending) { environment.markAsPresented(pending.version) }
+        }
     }
 }
 ```
 
 ### 平台支持
-- Android：JitPack AAR（`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2`）
+- Android：JitPack AAR（`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0`）
 - iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'KuiklyWhatsNew'`）
 - HarmonyOS：同一份 Kuikly DSL 代码
 ```
 
 ## 4. 提交前检查
 
-- [x] JitPack 上 `1.2.2` 构建成功（`whatsnew-1.2.2.pom` / `whatsnew-android-1.2.2.aar` 可下载）
-- [x] GitHub Release `v1.2.2` 上有 `WhatsNew.xcframework.zip`
-- [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.2.2'`）
+- [x] JitPack 上 `1.3.0` 构建成功（`whatsnew-1.3.0.pom` / `whatsnew-android-1.3.0.aar` 可下载）
+- [x] GitHub Release `v1.3.0` 上有 `WhatsNew.xcframework.zip`
+- [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.3.0'`）
 - [x] README 中的版本号与 tag 一致

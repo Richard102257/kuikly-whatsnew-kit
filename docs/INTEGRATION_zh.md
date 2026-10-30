@@ -41,7 +41,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
             }
         }
     }
@@ -67,7 +67,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.2.2'
+pod 'KuiklyWhatsNew', '~> 1.3.0'
 ```
 
 podspec 指向 GitHub Release 上的 `WhatsNew.xcframework.zip`（`ios-arm64` +
@@ -126,7 +126,7 @@ git checkout whatsnew/build.gradle.kts
 
 ```kotlin
 // build.gradle.kts（你的 Kuikly 业务模块）
-implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
 ```
 
 还需要 `js(IR) { binaries.executable() }` + Kuikly Gradle 插件 + KSP，
@@ -494,7 +494,7 @@ CocoaPods / Xcode 不编译 Kotlin。Kotlin/Native 必须先编译成 `.framewor
 
 **Q：JitPack 上的版本号是什么格式？**
 `com.github.<user>.<repo>:<module>:<tag>`，例如
-`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2`。
+`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0`。
 
 **Q：图标能用自己的图片吗？**
 可以，使用 `WhatsNewIcon.UrlIcon("https://...")`。当前版本以占位符渲染，

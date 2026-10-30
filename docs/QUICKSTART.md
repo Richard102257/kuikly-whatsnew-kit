@@ -17,7 +17,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0")
             }
         }
     }
@@ -27,7 +27,7 @@ kotlin {
 iOS（CocoaPods）：
 
 ```ruby
-pod 'KuiklyWhatsNew', '~> 1.2.2'
+pod 'KuiklyWhatsNew', '~> 1.3.0'
 ```
 
 > 只有一个模块，Android / iOS / HarmonyOS / Web / 小程序通用。
