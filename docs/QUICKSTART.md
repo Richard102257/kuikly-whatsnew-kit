@@ -157,12 +157,12 @@ class MyApp : Application() {
 **HarmonyOS**：需要两件事（`bundleManager` 是 ArkTS API，库内暂无绑定）：
 
 ```kotlin
-// 1. 指定版本号（否则恒为 1.0.0，组件不会显示）
-whatsNewCurrentVersionOverride = "1.2.0"
-
-// 2. 页面里改用 Kuikly 模块存储（默认实现是内存，冷启动会丢）
 class HomePage : Pager() {
     private val environment by lazy {
+        // 1. 版本号：render 层把真实 versionName 透传到 pageData.appVersion
+        whatsNewCurrentVersionOverride = pageData.appVersion.ifEmpty { "1.0.0" }
+
+        // 2. 存储：默认实现是内存，页面内改用 Kuikly 模块存储（跨冷启动保留）
         WhatsNewEnvironment(
             versionStore = createWhatsNewVersionStore(),
             whatsNewCollection = collection

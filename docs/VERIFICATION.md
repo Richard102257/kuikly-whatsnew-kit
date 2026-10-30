@@ -345,6 +345,81 @@ node wxshot.js
    连上后 `mp.screenshot()` 拿到的是开发者工具模拟器画面（640×1386），不是 macOS 截屏。
    开发者工具主窗口是 `NSWindowSharingNone`，`screencapture` 截不到它，必须走 automator。
 
+## 3.7 鸿蒙构建
+
+目标：把 `:whatsnew` 编到 `ohosArm64`，产出一个能装进 HarmonyOS 工程的 `libshared.so` + HAP。
+**结果：构建全链路成功，运行未验证**（原因见 3.7.2）。
+
+### 3.7.1 实际做了什么
+
+| 步骤 | 命令 | 结果 |
+|------|------|------|
+| 拉 KBA 工具链 | 腾讯镜像 `kotlin-gradle-plugin:2.0.21-KBA-010` + `kotlin-native-prebuilt-...-macos-x86_64.tar.gz`（68 MB） | ✅ |
+| 编库 + Demo → `libshared.so` | `./gradlew -c settings.ohos.gradle.kts :whatsnewOhos:linkSharedDebugSharedOhosArm64` | ✅ `BUILD SUCCESSFUL in 8m 30s` |
+| 装 ohpm 依赖 | `cd ohosApp/entry && ohpm install` | ✅ `@kuikly-open/render@2.4.0`（HAR 内含 `libkuikly.so` / `libc++_shared.so` / `include/Kuikly`） |
+| 编 HAP | `hvigorw --mode module -p product=default -p buildMode=debug assembleHap` | ✅ `BUILD SUCCESSFUL in 8s` |
+
+产物：
+
+```
+whatsnewOhos/build/bin/ohosArm64/sharedDebugShared/
+  libshared.so        6.5 MB  ELF 64-bit LSB shared object, ARM aarch64
+  libshared_api.h     4.9 KB  （含 libshared_symbols() → kotlin.root.initKuikly()）
+
+ohosApp/entry/build/default/outputs/default/
+  entry-default-unsigned.hap   9.8 MB
+    libs/arm64-v8a/libkuikly_entry.so   183 KB   NAPI 桥（本次编出）
+    libs/arm64-v8a/libkuikly.so         1.6 MB   Kuikly 渲染层（ohpm HAR）
+    libs/arm64-v8a/libshared.so         6.8 MB   Kotlin 业务代码（含 :whatsnew）
+    libs/arm64-v8a/libc++_shared.so     1.2 MB
+    ets/modules.abc                     178 KB   ArkTS 编译产物
+```
+
+几个关键结论（之前的判断是错的，已更正）：
+
+- **不需要从源码构建 `core-render-ohos`**：ohpm 上有 `@kuikly-open/render@2.4.0`，
+  HAR 直接带预编译 `libkuikly.so` 和头文件。
+- **不需要从源码构建 Kuikly 的 DSL 层**：Maven Central 上有带 `-ohos` 后缀的变体
+  （`core:2.4.0-2.0.21-ohos` 的 `.module` 里有 `ohosArm64ApiElements-published`）。
+- **`ohosArm64` 目标确实只有 KBA Kotlin 有**：标准 `2.0.21` 的
+  `~/.konan/kotlin-native-prebuilt-macos-x86_64-2.0.21/konan/targets` 里没有 `ohos_arm64`。
+- `initKuikly()` 由 Kuikly 的 KSP 处理器生成（`core-ksp:2.4.0-2.0.21-ohos`），
+  它引用的 `com_tencent_kuikly_SetCallKotlin` 在 `libshared.so` 里是 `U`（未定义），
+  运行时由 `libkuikly.so` 提供 —— 这是设计如此，不是链接错误。
+
+### 3.7.2 为什么没有截图
+
+三个条件同时不满足，缺一不可：
+
+| 条件 | 现状 |
+|------|------|
+| 模拟器 | **DevEco Studio 的 HarmonyOS 模拟器不支持 Intel Mac**（华为官方文档明确写）。本机是 x86_64，`Contents/tools/emulator/Emulator` 虽是 x86_64 Mach-O，但没有系统镜像：`~/.Huawei/Emulator` 不存在，`Emulator -imageList` 这个查询命令要 6.1.0 Beta1 才有（本机 6.0.1.200）。镜像要在 DevEco Device Manager 里下载，需登录华为账号 |
+| 真机 | `hdc list targets` → `[Empty]`，没有连接任何 HarmonyOS 设备 |
+| 签名 | `build-profile.json5` 的 `signingConfigs` 为空，只能产出 `entry-default-unsigned.hap`。装到设备/模拟器要华为开发者账号的调试证书 + profile（`hap-sign-tool.jar` 自签的证书 HarmonyOS 设备不认） |
+
+所以这一端的状态是：**代码和构建链验证到 HAP 为止，运行和截图留给有 HarmonyOS 设备的环境**。
+不拿别的端截图冒充，也不把 unsigned HAP 说成「已支持」。
+
+### 3.7.3 踩到的坑
+
+1. **工程路径含空格 + hvigor 生成的 `summary.cmake` 未加引号**
+   `CMakeLists.txt` 里 `include(${PACKAGE_FIND_FILE})` 在 `/Users/richard/Documents/Default Project/...`
+   下会报 `Unknown arguments specified`。本项目不用 hvigor 的 native 包发现机制（手工 link
+   `libkuikly.so`），直接删掉那段 include 即可。
+
+2. **`PackageHap` 找不到 Java**
+   hvigor 走 PATH 里的 `java`，不读 `JAVA_HOME`。用 DevEco 自带的 JBR：
+   `export JAVA_HOME=/Applications/DevEco-Studio.app/Contents/jbr/Contents/Home` 并把
+   `$JAVA_HOME/bin` 放进 PATH。
+
+3. **KSP 版本告警**
+   `ksp-2.0.21-1.0.27 is too old for kotlin-2.0.21-KBA-010` —— 只是告警，
+   KSP 能正常生成 `initKuikly()`，构建不受影响。
+
+4. **`main_pages.json` 抄了官方 demo 的页面表**
+   官方 `ohosApp` 里有 `pages/GestureThrough`，我们的工程没有这个文件，
+   ArkTS 编译会报 `Page ... does not exist`。页面表只留 `pages/Index`。
+
 ## 4. iOS 分发
 
 ### 4.1 XCFramework（1.2.0，Kuikly 2.4.0）
@@ -414,10 +489,13 @@ pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用�
   `kotlin-js-store/yarn.lock` 已提交，避免 `Lock file was changed` 失败。
 - `OpenKuiklyIOSRender` 依赖在本地 lint 时通过 `git url.insteadOf` 指向一份
   `core-render-ios` 子集仓库，以规避 `github.com` 拉取超时；正式 lint / push 使用 trunk 上的 2.30.0。
-- 鸿蒙未验证：`core-render-ohos` **没有发布到 Maven Central，Tencent 镜像上也没有**
-  （`maven-metadata.xml` 404），它由 KuiklyUI 仓库的 C++ / ArkTS 源码构建；
-  `ohosArm64` 目标还需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`。
-  因此 `whatsnew/build.ohos.gradle.kts` 只声明 DSL 层 `core`，render 层由宿主的鸿蒙工程提供。
+- 鸿蒙：**已构建，未实机运行**（见 [3.7](#37-鸿蒙构建)）。
+  之前这里写「`core-render-ohos` 没有发布到 Maven、需要源码构建」是**错的** ——
+  Kuikly 的鸿蒙产物都在，只是分了两处：DSL 层是 Maven Central 上的
+  `com.tencent.kuikly-open:core:2.4.0-2.0.21-ohos`（带 `ohosArm64ApiElements` 变体），
+  渲染层是 ohpm 上的 `@kuikly-open/render@2.4.0`（HAR 自带 `libs/arm64-v8a/libkuikly.so`
+  和 `include/Kuikly/*.h`）。`ohosArm64` 目标仍需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`
+  （Gradle 插件和 native 预编译包都在 `mirrors.tencent.com/repository/maven-tencent`）。
 
 ## 6. 1.2.2 发布记录
 

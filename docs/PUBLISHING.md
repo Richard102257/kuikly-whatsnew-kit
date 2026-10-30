@@ -168,15 +168,30 @@ pod trunk push KuiklyWhatsNew.podspec --allow-warnings
 
 ## 三、HarmonyOS
 
-鸿蒙目标需要 Kuikly 提供的 `ohosArm64` Kotlin 目标，使用独立构建脚本：
+鸿蒙目标需要 Kuikly 定制的 Kotlin（`ohosArm64` 目标），走独立的 settings + 构建脚本，
+**不需要**替换 `whatsnew/build.gradle.kts`：
 
 ```bash
-cp whatsnew/build.ohos.gradle.kts whatsnew/build.gradle.kts
-./gradlew :whatsnew:assemble
-git checkout whatsnew/build.gradle.kts
+# 编库（klib）
+./gradlew -c settings.ohos.gradle.kts :whatsnew:assemble
+
+# 发到本机 Maven（坐标 io.github.Richard102257:whatsnew-ohosarm64:1.3.0_ohos）
+./gradlew -c settings.ohos.gradle.kts :whatsnew:publishToMavenLocal
 ```
 
-产物为 `.so` / klib，可发布到 Maven 或随宿主工程一起构建。
+产物：`whatsnew/build/classes/kotlin/ohosArm64/main/klib/whatsnew.klib`。
+
+依赖关系（和 Android / iOS 的分工一致）：
+
+| 层 | 坐标 | 来源 |
+|---|---|---|
+| DSL 层 | `com.tencent.kuikly-open:core:2.4.0-2.0.21-ohos` | Maven Central（带 `ohosArm64` 变体） |
+| 渲染层 | `@kuikly-open/render@2.4.0` | ohpm（HAR 自带 `libkuikly.so` + 头文件） |
+
+**没有发到 JitPack / Maven Central**：JitPack 用标准 Kotlin 构建，产不出 `ohosArm64` 变体。
+第三方用 `publishToMavenLocal` 后的本地坐标，或直接引源码模块（见 `settings.ohos.gradle.kts`）。
+
+Demo 的完整 HAP 构建见 [VERIFICATION.md 3.7](VERIFICATION.md#37-鸿蒙构建)。
 
 ---
 

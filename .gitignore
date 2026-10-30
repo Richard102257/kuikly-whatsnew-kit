@@ -47,6 +47,13 @@ iosApp/Podfile.lock
 # HarmonyOS
 .hvigor/
 .ohos/
+ohosApp/**/oh_modules/
+ohosApp/**/build/
+ohosApp/**/.preview/
+ohosApp/local.properties
+# 由 :whatsnewOhos 编译产出后拷入（见 ohosApp/README）
+ohosApp/entry/libs/arm64-v8a/*.so
+ohosApp/entry/src/main/cpp/thirdparty/
 
 # Kuikly
 *.kuikly/

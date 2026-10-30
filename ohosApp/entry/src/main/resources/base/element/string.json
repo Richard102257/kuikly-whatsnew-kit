@@ -1,8 +1,16 @@
 {
   "string": [
     {
-      "name": "app_name",
-      "value": "WhatsNewKit Demo"
+      "name": "module_desc",
+      "value": "Kuikly WhatsNewKit HarmonyOS demo"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "WhatsNewKit demo entry"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "WhatsNewKit"
     }
   ]
 }

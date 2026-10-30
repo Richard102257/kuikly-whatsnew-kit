@@ -83,12 +83,15 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 |------|------|------|
 | Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
 | iOS | ✅ 已覆盖 | 上面的两张，iPhone 16 Pro 模拟器（iOS 18.3）+ Kotlin/Native `shared.framework` + `OpenKuiklyIOSRender`，第二张由 UI 测试真实点击后重启截取 |
-| HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
+| HarmonyOS | 🟡 已构建，无截图 | `libshared.so` + `entry-default-unsigned.hap` 都已编出（见 [docs/VERIFICATION.md](docs/VERIFICATION.md#37-鸿蒙构建)）。**跑不起来**：DevEco 的模拟器不支持 Intel Mac，本机没有 HarmonyOS 真机，安装还需要华为开发者账号签名 |
 | H5 | ✅ 已覆盖 | 上面的两张，Chromium + `core-render-web`（源码构建）+ 官方 `h5App-js` 壳 |
 | 微信小程序 | ✅ 已覆盖 | 上面的两张，微信开发者工具 + `core-render-web:miniapp`（源码构建）+ 官方 `miniApp` 壳，测试号 AppID |
 
 > 没有截图的平台不是「没实现」，而是**当前环境跑不起来**。库的 commonMain 代码是
-> 同一份，Android / iOS / H5 / 小程序都跑通意味着逻辑层是通的；鸿蒙的容器差异这里不假装验证过。
+> 同一份，Android / iOS / H5 / 小程序都跑通意味着逻辑层是通的。
+> 鸿蒙这条链是**编得出来但跑不了**：Kotlin → `libshared.so` → NAPI → `@kuikly-open/render`
+> → HAP 全绿，缺的是一台能装 HAP 的机器。具体卡点写在
+> [docs/VERIFICATION.md](docs/VERIFICATION.md#37-鸿蒙构建) 里，不假装验证过。
 
 ---
 
@@ -160,8 +163,35 @@ framework 名仍是 `WhatsNew`，pod 名因为 trunk 上 `WhatsNew` 已被占用
 
 ### HarmonyOS
 
-鸿蒙 target 需要 Kuikly 的 `ohosArm64` 目标，使用 `whatsnew/build.ohos.gradle.kts`
-在 macOS / 鸿蒙工具链上构建，或同样走源码模块方式引入。
+鸿蒙有两条路，都不需要重写 UI：
+
+**方式 A：源码模块（当前唯一验证过的路径）**
+
+```bash
+# 1. 编 Kotlin 侧 → libshared.so（需要 KBA Kotlin 2.0.21-KBA-010，脚本已配好）
+./gradlew -c settings.ohos.gradle.kts :whatsnewOhos:linkSharedDebugSharedOhosArm64
+
+# 2. 拷产物进鸿蒙工程（示例工程见 ohosApp/README.md）
+cp whatsnewOhos/build/bin/ohosArm64/sharedDebugShared/libshared.so        ohosApp/entry/libs/arm64-v8a/
+cp whatsnewOhos/build/bin/ohosArm64/sharedDebugShared/libshared_api.h     ohosApp/entry/src/main/cpp/thirdparty/biz_entry/
+
+# 3. 编 HAP
+cd ohosApp && hvigorw --mode module -p product=default -p buildMode=debug assembleHap
+```
+
+`settings.ohos.gradle.kts` 把 `:whatsnew` 切到 `build.ohos.gradle.kts`（只编 `ohosArm64`），
+依赖的是 Kuikly 的 ohos 版 DSL 层 `com.tencent.kuikly-open:core:2.4.0-2.0.21-ohos`；
+渲染层由 ohpm 包 `@kuikly-open/render@2.4.0` 提供（HAR 里自带 `libkuikly.so` 和头文件）。
+
+**方式 B：Maven（`1.3.0_ohos`，只发到 mavenLocal）**
+
+```bash
+./gradlew -c settings.ohos.gradle.kts :whatsnew:publishToMavenLocal
+```
+
+> 鸿蒙 klib 没有发到 JitPack / Maven Central：JitPack 用标准 Kotlin 构建，
+> 产不出 `ohosArm64` 变体。第三方要用就 `publishToMavenLocal` 后本地引用，或直接引源码模块。
+> 完整接入说明见 [docs/INTEGRATION_zh.md](docs/INTEGRATION_zh.md#4-鸿蒙)。
 
 ### 微信小程序 / H5
 
@@ -219,16 +249,20 @@ kuikly-whatsnew-kit/
 │       ├── androidMain/      # 版本号 + SharedPreferences
 │       ├── iosMain/          # NSBundle + NSUserDefaults
 │       ├── jsMain/           # wx.getAccountInfoSync + wx storage / localStorage
-│       ├── ohosArm64Main/    # 鸿蒙 Preferences
+│       ├── ohosArm64Main/    # 鸿蒙：版本号占位（建议用 pageData.appVersion 覆盖）+ 内存存储
 │       ├── commonTest/       # 纯逻辑单测（10 个）
 │       └── jsTest/           # 伪造 wx / localStorage 的 JS 单测（9 个）
 │
 ├── KuiklyWhatsNew.podspec          # iOS 分发（预编译 XCFramework）
 ├── androidApp/               # Android Demo 宿主（KuiklyRenderViewBaseDelegator）
 ├── shared/                   # Demo 共享模块 + iOS 页面（Kotlin/Native framework）
+├── whatsnewOhos/             # 鸿蒙 Demo 的 Kotlin 侧 → libshared.so（KSP 生成 initKuikly）
 ├── miniApp/                  # 小程序 / H5 Demo 业务模块（js + KSP + Kuikly 插件）
 ├── iosApp/                   # iOS Demo（Xcode 工程由 generate_project.rb 生成）
-├── ohosApp/ h5App/           # 鸿蒙 / H5 Demo 工程
+├── ohosApp/                  # 鸿蒙 Demo（DevEco 工程：NAPI 桥 + Kuikly 组件）
+├── h5App/                    # H5 Demo 壳
+├── settings.ohos.gradle.kts  # 鸿蒙构建入口（-c 用，切 KBA Kotlin + ohosArm64）
+├── build.ohos.gradle.kts     # 鸿蒙根构建脚本
 ├── docs/                     # 文档（CI 工作流模板在 docs/ci/）
 └── preview/                  # 在线预览
 ```
@@ -428,15 +462,15 @@ val whatsNew = WhatsNew(
 |----------|----------|--------|
 | Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
 | iOS | ① `pod 'KuiklyWhatsNew', '~> 1.3.0'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
-| HarmonyOS | 源码模块（无 Maven 产物） | ⚠️ 代码就绪，需 2 步手动配置，未实机验证 |
+| HarmonyOS | 源码模块 / `1.3.0_ohos`（mavenLocal） | 🟡 已构建（`libshared.so` + unsigned HAP 全链路绿），**未实机运行**：Intel Mac 无官方模拟器 + 无真机 + 签名需开发者账号 |
 | Web (H5) | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 第三方 `jsNodeRun` + 真实 Chromium 截图） |
 | Mini Programs | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 真实 bundle + 微信开发者工具截图） |
 
-**HarmonyOS 的两个手动步骤**（详见 [INTEGRATION_zh.md](docs/INTEGRATION_zh.md)）：
+**HarmonyOS 的两个手动步骤**（详见 [INTEGRATION_zh.md](docs/INTEGRATION_zh.md#4-鸿蒙)）：
 
 ```kotlin
-whatsNewCurrentVersionOverride = "1.2.0"          // 1. 鸿蒙侧读不到 bundle 版本号
-versionStore = createWhatsNewVersionStore()        // 2. 默认实现是内存，页面内改用 Kuikly 模块存储
+whatsNewCurrentVersionOverride = pageData.appVersion   // 1. 鸿蒙侧读不到 bundle 版本号（render 层会透传）
+versionStore = createWhatsNewVersionStore()             // 2. 默认实现是内存，页面内改用 Kuikly 模块存储
 ```
 
 ---

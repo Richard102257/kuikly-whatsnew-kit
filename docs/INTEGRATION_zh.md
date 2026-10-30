@@ -92,35 +92,52 @@ implementation(project(":whatsnew"))
 
 ### 4. 鸿蒙
 
-鸿蒙没有可用的 Maven 产物，只能以**源码模块**方式引入（原因见下）：
+鸿蒙的 klib 没有发到 JitPack / Maven Central（JitPack 用标准 Kotlin，产不出 `ohosArm64` 变体），
+但**构建链是通的**，三种接法按需选：
+
+**A. 源码模块（推荐）**
 
 ```kotlin
 // settings.gradle.kts
 include(":whatsnew")
 project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
+// 只在鸿蒙构建里换成 ohos 版构建脚本
+project(":whatsnew").buildFileName = "build.ohos.gradle.kts"
 ```
+
+**B. 本机 Maven**
+
+```bash
+./gradlew -c settings.ohos.gradle.kts :whatsnew:publishToMavenLocal
+```
+
+```kotlin
+implementation("io.github.Richard102257:whatsnew-ohosarm64:1.3.0_ohos")
+```
+
+**C. 直接用本仓库的 Demo 工程**：`ohosApp/` 是完整可编译的 DevEco 工程，
+`whatsnewOhos/` 演示了 Kotlin → `libshared.so` → NAPI 的完整链路。
 
 前置条件（缺一不可）：
 
 | 条件 | 说明 |
 |------|------|
-| Kuikly 定制 Kotlin | 需要 `2.0.21-KBA-010`，标准 Kotlin 没有 `ohosArm64` 目标 |
-| OHOS 渲染层 | `core-render-ohos` **没有发布到 Maven**（Central / 腾讯镜像都 404），由 KuiklyUI 仓库源码构建，宿主鸿蒙工程自带 |
-| 版本号 | 鸿蒙侧的 `bundleManager` 是 ArkTS API，本库暂无 cinterop 绑定，**必须**手动设置 `whatsNewCurrentVersionOverride` |
-| 持久化 | 默认实现是内存，需要跨会话保留时用 `createWhatsNewVersionStore()` |
+| Kuikly 定制 Kotlin | 需要 `2.0.21-KBA-010`，标准 Kotlin 没有 `ohosArm64` 目标（脚本已配好，腾讯镜像可取） |
+| Kuikly DSL 层 | 用带 `-ohos` 后缀的版本：`com.tencent.kuikly-open:core:2.4.0-2.0.21-ohos` |
+| OHOS 渲染层 | ohpm 包 `@kuikly-open/render@2.4.0`，HAR 自带 `libkuikly.so` + 头文件，不用从源码构建 |
+| 版本号 | 鸿蒙侧 `bundleManager` 是 ArkTS API，本库暂无 cinterop 绑定；render 层会把真实 `versionName` 透传到 `pageData.appVersion`，页面里赋给 `whatsNewCurrentVersionOverride` 即可 |
+| 持久化 | `createPersistentWhatsNewVersionStore()` 在鸿蒙是内存实现，跨冷启动保留要用 `createWhatsNewVersionStore()`（页面内） |
 
-`whatsnew/build.ohos.gradle.kts` 是独立的鸿蒙构建脚本（只声明 DSL 层 `core`）：
+构建（不需要替换 `build.gradle.kts`）：
 
 ```bash
-cp whatsnew/build.ohos.gradle.kts whatsnew/build.gradle.kts
-./gradlew :whatsnew:assemble
-git checkout whatsnew/build.gradle.kts
+./gradlew -c settings.ohos.gradle.kts :whatsnew:assemble
 ```
 
-> ⚠️ 鸿蒙路径**未实机验证**（本机没有 DevEco / OHOS SDK）。
-> 代码层面 `ohosArm64Main` 的 `expect/actual` 已就位，纯 DSL 的 UI 由 Kuikly 渲染，
-> 但上面两个「额外步骤」必须做，否则组件不会显示（版本号恒为 `1.0.0`）
-> 或每次冷启动都重复显示（存储不落盘）。
+> 🟡 **已构建，未实机运行**：本机把 `libshared.so` 和 `entry-default-unsigned.hap` 都编出来了
+> （详见 [VERIFICATION.md](VERIFICATION.md#37-鸿蒙构建)），但跑不起来 ——
+> DevEco 的模拟器不支持 Intel Mac，本机没有 HarmonyOS 真机，装 HAP 还需要华为开发者账号签名。
+> 代码层面 `ohosArm64Main` 的 `expect/actual` 已就位，纯 DSL 的 UI 由 Kuikly 渲染。
 
 ### 5. Web（H5）/ 微信小程序
 
@@ -379,10 +396,15 @@ class MyApp : Application() {
 
 需要两件事（原因见「一、安装 → 4. 鸿蒙」）：
 
-**1. 指定版本号**（鸿蒙侧无法自动读取）：
+**1. 指定版本号**（鸿蒙侧无法自动读取，用 render 层透传的真实 `versionName`）：
 
 ```kotlin
-whatsNewCurrentVersionOverride = "1.2.0"
+@Page("HomePage")
+class HomePage : Pager() {
+    init {
+        whatsNewCurrentVersionOverride = pageData.appVersion.ifEmpty { "1.0.0" }
+    }
+}
 ```
 
 **2. 让「已展示版本」真正落盘**：默认的 `createPersistentWhatsNewVersionStore()`

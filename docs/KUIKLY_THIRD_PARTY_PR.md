@@ -121,7 +121,8 @@ override fun body(): ViewBuilder = {
 ### 平台支持
 - Android：JitPack AAR（`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0`）
 - iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'KuiklyWhatsNew'`）
-- HarmonyOS：同一份 Kuikly DSL 代码
+- HarmonyOS：同一份 Kuikly DSL 代码，`./gradlew -c settings.ohos.gradle.kts :whatsnew:assemble`
+  （KBA Kotlin + `core:...-ohos` + ohpm `@kuikly-open/render`；HAP 构建见 `ohosApp/`）
 ```
 
 ## 4. 提交前检查

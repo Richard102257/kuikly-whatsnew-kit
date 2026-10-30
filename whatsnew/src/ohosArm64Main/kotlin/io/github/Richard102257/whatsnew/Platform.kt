@@ -18,9 +18,13 @@ package io.github.Richard102257.whatsnew
  *    需要跨会话保留时，在页面里改用 `createWhatsNewVersionStore()`
  *    （基于 Kuikly 内置的 `SharedPreferencesModule`，鸿蒙 render 层已实现）。
  *
- * 已知限制（未实机验证）：
- * - 构建需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`（标准 Kotlin 没有 `ohosArm64` 目标）
- * - `core-render-ohos` 没有发布到 Maven，需从 KuiklyUI 仓库源码构建，由宿主工程提供
+ * 已知限制（构建已打通，运行未实机验证）：
+ * - 构建需要 Kuikly 定制的 Kotlin `2.0.21-KBA-010`（标准 Kotlin 没有 `ohosArm64` 目标），
+ *   DSL 层用带 `-ohos` 后缀的 `com.tencent.kuikly-open:core:2.4.0-2.0.21-ohos`
+ * - 渲染层是 ohpm 包 `@kuikly-open/render`，由宿主鸿蒙工程引入
+ *   （HAR 自带 `libkuikly.so`，不需要从 KuiklyUI 源码构建）
+ * - 版本号建议由 render 层透传的 `pageData.appVersion` 赋给
+ *   `whatsNewCurrentVersionOverride`（见 `whatsnewOhos` 的 Demo 页）
  */
 
 // ─── 版本获取 ───
