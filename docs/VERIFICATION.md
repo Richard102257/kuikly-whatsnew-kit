@@ -115,8 +115,16 @@ adb shell am start -n io.github.Richard102257.whatsnew.demo/.MainActivity
 adb exec-out screencap -p > docs/images/android-02-caught-up.png
 ```
 
-环境：AVD `Medium_Phone_API_37.0`（Android 15 / API 37，x86_64），
-`-gpu angle_indirect`（`host` 会 SIGSEGV，`swiftshader_indirect` 卡到 System UI ANR）。
+环境：AVD `Medium_Phone_API_37.0`（Android 15 / API 37，x86_64）。
+
+> 这两张图在 2026-10-30 重新跑过一遍：冷启动模拟器 → 连上 `AndroidWifi`（状态栏是系统
+> 真实状态栏，不是 demo mode）→ `pm clear` → 截图 → `input tap` 点「继续」→
+> `am force-stop` 后重启 → 截图。`shared_prefs/kuikly_whatsnew_store.xml` 里能看到
+> `presented_1.2.0=true` / `presented_all=1.2.0`，证明持久化真的落盘了。
+>
+> GPU 选择上，`-gpu swiftshader_indirect` 在这台 Intel Mac 上会把 System UI 拖到 ANR
+> （截图里会弹出 "System UI isn't responding"），`-gpu host` 反而正常；如果你的机器
+> `host` 崩（SIGSEGV），换 `angle_indirect`。
 
 ### 3.3 这一轮修掉的 3 个真实渲染 bug
 
