@@ -132,6 +132,13 @@ https://github.com/Richard102257/kuikly-whatsnew-kit/releases/download/v1.2.0/Wh
 pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用，故发布名为
 `KuiklyWhatsNew`；framework 名与代码 `import` 不受影响。
 
+### 4.3 已知小瑕疵（1.2.0）
+
+1.2.0 的 `WhatsNew.xcframework.zip` 只打了 `WhatsNew.xcframework`，**没带 `LICENSE`**，
+所以 lint / `pod install` 会打印 `[!] Unable to read the license file 'LICENSE'`
+（podspec 里 `license[:file] => 'LICENSE'`）。这是警告，trunk 已正常接受，pod 也能装；
+从 1.2.1 起按 [PUBLISHING.md](PUBLISHING.md) 的命令把 `LICENSE` 一起打进 zip。
+
 ## 5. 环境备注
 
 - 本机 Xcode 16.2 出厂未带 iOS 平台，需先 `xcodebuild -downloadPlatform iOS`（约 8.7 GB）。

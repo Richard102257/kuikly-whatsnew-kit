@@ -86,11 +86,17 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
 
 ```bash
 cd whatsnew/build/XCFrameworks/release
-zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework
+# LICENSE 必须一起打进 zip：podspec 里 license[:file] => 'LICENSE' 会在下载目录里找它
+cp ../../../LICENSE .
+zip -qry WhatsNew.xcframework.zip WhatsNew.xcframework LICENSE
 
 gh release create v1.2.0 WhatsNew.xcframework.zip \
   --title "v1.2.0" --notes "WhatsNew 1.2.0"
 ```
+
+> 少打 `LICENSE` 的后果：`pod spec lint` / `pod install` 会打印
+> `[!] Unable to read the license file 'LICENSE'`。这是警告不是错误（trunk 仍可发布），
+> 但意味着分发出去的 pod 不含许可证文件。1.2.0 就漏了，从 1.2.1 起按上面的命令打包。
 
 或由 CI 自动完成（`.github/workflows/release-ios.yml`，模板见 `docs/ci/release-ios.yml`）：
 推送 `v*` tag 时，macOS runner 构建并打包 `WhatsNew.xcframework.zip` 上传到 GitHub Release。
