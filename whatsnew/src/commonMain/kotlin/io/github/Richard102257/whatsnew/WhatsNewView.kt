@@ -7,6 +7,7 @@ import com.tencent.kuikly.core.layout.FlexAlign
 import com.tencent.kuikly.core.layout.FlexDirection
 import com.tencent.kuikly.core.layout.FlexJustifyContent
 import com.tencent.kuikly.core.views.DivView
+import com.tencent.kuikly.core.base.ViewConst
 import com.tencent.kuikly.core.views.TextView
 
 /**
@@ -21,6 +22,12 @@ import com.tencent.kuikly.core.views.TextView
  *     setup(whatsNew) { /* 用户点击主按钮后的回调 */ }
  * }
  * ```
+ *
+ * ⚠️ 所有子视图都必须在 `addChild(xxx) { ... }` 的 init 闭包里构建。
+ * Kuikly 的 `pagerId` 是在 `internalAddChild` 时从父容器继承的，
+ * 「先 `DivView()` 出来、配置好、再 `addChild(它)`」会让 `attr {}` 静默失效
+ * （pagerId 为空时 `attr` 直接 return），并且给它的子节点 `addChild` 会抛
+ * `pager id is empty`。
  */
 class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
 
@@ -29,7 +36,8 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
 
     override fun createAttr() = ContainerAttr()
     override fun createEvent() = Event()
-    override fun viewName() = WhatsNewConst.VIEW_NAME
+    // 纯 DSL 组合组件：挂在内置的 "view" 原生节点上，不注册任何平台自定义 View
+    override fun viewName() = ViewConst.TYPE_VIEW
 
     /**
      * 绑定 WhatsNew 数据并渲染
@@ -59,13 +67,26 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
         }
 
         // ─── 标题 ───
-        addChild(TextView()) {
+        // 用一层 flex 容器做水平居中：Kuikly 的 TextView 默认按内容宽度测量，
+        // 只写 textAlignCenter() 在父容器里并不会真的居中。
+        addChild(DivView()) {
             attr {
-                text(whatsNew.title.text)
-                fontSize(32f)
-                fontWeightBold()
-                color(whatsNew.title.foregroundColor)
-                textAlignCenter()
+                flexDirection(FlexDirection.COLUMN)
+                alignItems(FlexAlign.CENTER)
+            }
+
+            addChild(TextView()) {
+                attr {
+                    text(whatsNew.title.text)
+                    fontSize(32f)
+                    fontWeightBold()
+                    color(whatsNew.title.foregroundColor)
+                    textAlignCenter()
+                    // Kuikly 默认单行 + 省略号，这里放开到 10 行（lines(0) 在 Android 上会
+                    // 让 TextView.setMaxLines(0)，整段文字直接不显示）
+                    lines(10)
+                    textOverFlowWordWrapping()
+                }
             }
         }
 
@@ -84,7 +105,7 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
             }
 
             whatsNew.features.forEachIndexed { index, feature ->
-                addChild(this@WhatsNewView.createFeatureView(feature)) { }
+                addFeatureView(feature)
                 if (index < whatsNew.features.size - 1) {
                     addChild(DivView()) {
                         attr { height(layout.featureListSpacing) }
@@ -105,32 +126,100 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
             }
 
             whatsNew.secondaryAction?.let { action ->
-                addChild(this@WhatsNewView.createSecondaryButton(action, layout)) { }
+                addSecondaryButton(action, layout)
                 addChild(DivView()) {
                     attr { height(layout.footerActionSpacing) }
                 }
             }
 
-            addChild(this@WhatsNewView.createPrimaryButton(whatsNew.primaryAction, layout)) { }
+            addPrimaryButton(whatsNew.primaryAction, layout, this@WhatsNewView.dismissHandler)
+        }
+    }
+}
+
+// ─── 单个功能条目 ───
+
+private fun ViewContainer<*, *>.addFeatureView(feature: WhatsNewFeature) {
+        addChild(DivView()) {
+            attr {
+                flexDirection(FlexDirection.ROW)
+                alignItems(FlexAlign.FLEX_START)
+            }
+
+            // 图标容器
+            addChild(DivView()) {
+                attr {
+                    width(56f)
+                    height(56f)
+                    borderRadius(14f)
+                    backgroundColor(0x1F6200EE)
+                    flexDirection(FlexDirection.COLUMN)
+                    justifyContent(FlexJustifyContent.CENTER)
+                    alignItems(FlexAlign.CENTER)
+                }
+
+                addChild(TextView()) {
+                    attr {
+                        text(feature.icon.emoji)
+                        fontSize(24f)
+                    }
+                }
+            }
+
+            // 间距
+            addChild(DivView()) {
+                attr { width(16f) }
+            }
+
+            // 文本
+            addChild(DivView()) {
+                attr {
+                    flex(1f)
+                    flexDirection(FlexDirection.COLUMN)
+                    alignItems(FlexAlign.STRETCH)
+                }
+
+                addChild(TextView()) {
+                    attr {
+                        text(feature.title)
+                        fontSize(17f)
+                        fontWeight600()
+                        color(0xFF1A1A1A)
+                        lines(10)
+                        textOverFlowWordWrapping()
+                    }
+                }
+
+                feature.subtitle?.let { subtitle ->
+                    addChild(DivView()) {
+                        attr { height(4f) }
+                    }
+                    addChild(TextView()) {
+                        attr {
+                            text(subtitle)
+                            fontSize(15f)
+                            color(0xFF666666)
+                            lines(10)
+                            textOverFlowWordWrapping()
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // ─── 单个功能条目 ───
+// ─── 主按钮 ───
 
-    private fun createFeatureView(feature: WhatsNewFeature): DivView {
-        val container = DivView()
-        container.attr {
-            flexDirection(FlexDirection.ROW)
-            alignItems(FlexAlign.FLEX_START)
-        }
-
-        // 图标容器
-        container.addChild(DivView()) {
+private fun ViewContainer<*, *>.addPrimaryButton(
+    action: WhatsNewPrimaryAction,
+    layout: WhatsNewLayout,
+    dismissHandler: (() -> Unit)?,
+) {
+        addChild(DivView()) {
             attr {
-                width(56f)
-                height(56f)
-                borderRadius(14f)
-                backgroundColor(0x1F6200EE)
+                height(layout.primaryButtonHeight)
+                borderRadius(action.cornerRadius)
+                backgroundColor(action.backgroundColor)
                 flexDirection(FlexDirection.COLUMN)
                 justifyContent(FlexJustifyContent.CENTER)
                 alignItems(FlexAlign.CENTER)
@@ -138,116 +227,56 @@ class WhatsNewView : ViewContainer<ContainerAttr, Event>() {
 
             addChild(TextView()) {
                 attr {
-                    text(feature.icon.emoji)
-                    fontSize(24f)
+                    text(action.title)
+                    fontSize(17f)
+                    fontWeight600()
+                    color(action.foregroundColor)
+                }
+            }
+
+            event {
+                click {
+                    action.onDismiss?.invoke()
+                    dismissHandler?.invoke()
                 }
             }
         }
+    }
 
-        // 间距
-        container.addChild(DivView()) {
-            attr { width(16f) }
-        }
+// ─── 次按钮 ───
 
-        // 文本
-        container.addChild(DivView()) {
+private fun ViewContainer<*, *>.addSecondaryButton(
+    action: WhatsNewSecondaryAction,
+    layout: WhatsNewLayout,
+) {
+        addChild(DivView()) {
             attr {
-                flex(1f)
+                height(layout.secondaryButtonHeight)
+                borderRadius(action.cornerRadius)
+                backgroundColor(0x00000000)
                 flexDirection(FlexDirection.COLUMN)
-                alignItems(FlexAlign.FLEX_START)
+                justifyContent(FlexJustifyContent.CENTER)
+                alignItems(FlexAlign.CENTER)
             }
 
             addChild(TextView()) {
                 attr {
-                    text(feature.title)
-                    fontSize(17f)
-                    fontWeight600()
-                    color(0xFF1A1A1A)
+                    text(action.title)
+                    fontSize(16f)
+                    fontWeight500()
+                    color(action.foregroundColor)
                 }
             }
 
-            feature.subtitle?.let { subtitle ->
-                addChild(DivView()) {
-                    attr { height(4f) }
-                }
-                addChild(TextView()) {
-                    attr {
-                        text(subtitle)
-                        fontSize(15f)
-                        color(0xFF666666)
+            event {
+                click {
+                    when (val type = action.action) {
+                        // URL 打开由宿主通过 whatsNewUrlOpener 注入
+                        is SecondaryActionType.OpenURL -> whatsNewUrlOpener?.invoke(type.url)
+                        is SecondaryActionType.Custom -> type.handler()
                     }
                 }
-            }
         }
-
-        return container
-    }
-
-    // ─── 主按钮 ───
-
-    private fun createPrimaryButton(action: WhatsNewPrimaryAction, layout: WhatsNewLayout): DivView {
-        val button = DivView()
-        button.attr {
-            height(layout.primaryButtonHeight)
-            borderRadius(action.cornerRadius)
-            backgroundColor(action.backgroundColor)
-            flexDirection(FlexDirection.COLUMN)
-            justifyContent(FlexJustifyContent.CENTER)
-            alignItems(FlexAlign.CENTER)
-        }
-
-        button.addChild(TextView()) {
-            attr {
-                text(action.title)
-                fontSize(17f)
-                fontWeight600()
-                color(action.foregroundColor)
-            }
-        }
-
-        button.event {
-            click {
-                action.onDismiss?.invoke()
-                this@WhatsNewView.dismissHandler?.invoke()
-            }
-        }
-
-        return button
-    }
-
-    // ─── 次按钮 ───
-
-    private fun createSecondaryButton(action: WhatsNewSecondaryAction, layout: WhatsNewLayout): DivView {
-        val button = DivView()
-        button.attr {
-            height(layout.secondaryButtonHeight)
-            borderRadius(action.cornerRadius)
-            backgroundColor(0x00000000)
-            flexDirection(FlexDirection.COLUMN)
-            justifyContent(FlexJustifyContent.CENTER)
-            alignItems(FlexAlign.CENTER)
-        }
-
-        button.addChild(TextView()) {
-            attr {
-                text(action.title)
-                fontSize(16f)
-                fontWeight500()
-                color(action.foregroundColor)
-            }
-        }
-
-        button.event {
-            click {
-                when (val type = action.action) {
-                    // URL 打开由宿主通过 whatsNewUrlOpener 注入
-                    is SecondaryActionType.OpenURL -> whatsNewUrlOpener?.invoke(type.url)
-                    is SecondaryActionType.Custom -> type.handler()
-                }
-            }
-        }
-
-        return button
     }
 }
 

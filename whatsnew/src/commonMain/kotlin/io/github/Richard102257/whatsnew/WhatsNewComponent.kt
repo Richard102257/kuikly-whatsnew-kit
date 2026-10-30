@@ -3,23 +3,24 @@ package io.github.Richard102257.whatsnew
 /**
  * Kuikly 跨端组件 —— WhatsNew 核心接口
  *
- * 按照 Kuikly 扩展库规范，此模块定义跨端层逻辑。
- * 各平台侧实现通过 Render 注册，连接到此跨端接口。
+ * 本库是**纯 Kuikly DSL 组件**：UI 由 `DivView` / `TextView` 组合而成，
+ * 由 Kuikly 的 render 层渲染成各平台原生控件，**不需要任何平台侧实现**
+ * （没有 Android / iOS / 鸿蒙的自定义 View 注册）。
  *
- * 工程结构（参照 Kuikly 官方扩展库指引）：
- * ├── whatsnew/              ← 本模块：KMP 跨端层
- * ├── whatsnewAndroid/       ← Android 平台侧实现
- * ├── whatsnewIOS/           ← iOS 平台侧实现（podspec）
- * ├── whatsnewOhos/          ← 鸿蒙平台侧实现
- * └── androidApp/            ← Demo & 验证工程
+ * 唯一的平台差异是 `getCurrentVersion()` 和 `createPersistentWhatsNewVersionStore()`，
+ * 通过 `expect/actual` 提供。
  */
 
 /**
  * WhatsNew 组件名称常量
- * 用于跨平台注册和查找
+ *
+ * 纯 DSL 组件挂在 Kuikly 内置的 `view` 节点上，因此这里只是对外展示用的名字，
+ * 不参与任何平台侧注册。
  */
 object WhatsNewConst {
     const val COMPONENT_NAME = "WhatsNewView"
+
+    @Deprecated("纯 DSL 组件不再注册自定义原生 View，此常量已无实际作用")
     const val VIEW_NAME = "WhatsNewView"
 }
 

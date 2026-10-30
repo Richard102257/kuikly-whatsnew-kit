@@ -108,7 +108,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
             }
         }
     }

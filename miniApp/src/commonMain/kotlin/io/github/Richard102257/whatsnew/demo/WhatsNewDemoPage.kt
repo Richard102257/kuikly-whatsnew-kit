@@ -27,7 +27,7 @@ import io.github.Richard102257.whatsnew.whatsNewCurrentVersionOverride
  * Demo 里显式覆盖；正式项目里由 [getCurrentVersion] 自动读取。
  */
 @Page("WhatsNewDemoPage")
-internal class WhatsNewDemoPage : Pager() {
+class WhatsNewDemoPage : Pager() {
 
     private val environment = WhatsNewEnvironment(
         versionStore = createPersistentWhatsNewVersionStore(),
@@ -78,40 +78,37 @@ internal class WhatsNewDemoPage : Pager() {
                 }
             }
         } else {
-            addChild(this@WhatsNewDemoPage.createAllCaughtUpView()) { }
-        }
-    }
+            // 注意：子视图必须在 addChild(...) { } 的闭包里创建。
+            // 先 `DivView()` 出来再 `addChild(它)` 的话 pagerId 为空，attr 会静默失效。
+            addChild(DivView()) {
+                attr {
+                    flex(1f)
+                    flexDirection(FlexDirection.COLUMN)
+                    justifyContent(FlexJustifyContent.CENTER)
+                    alignItems(FlexAlign.CENTER)
+                    backgroundColor(Color.WHITE)
+                }
 
-    private fun createAllCaughtUpView(): DivView {
-        val content = DivView()
-        content.attr {
-            flex(1f)
-            flexDirection(FlexDirection.COLUMN)
-            justifyContent(FlexJustifyContent.CENTER)
-            alignItems(FlexAlign.CENTER)
-            backgroundColor(Color.WHITE)
-        }
+                addChild(TextView()) {
+                    attr {
+                        text("已经是最新版本 🎉")
+                        fontSize(18f)
+                        color(0xFF333333)
+                    }
+                }
 
-        content.addChild(TextView()) {
-            attr {
-                text("已经是最新版本 🎉")
-                fontSize(18f)
-                color(0xFF333333)
+                addChild(DivView()) {
+                    attr { height(8f) }
+                }
+
+                addChild(TextView()) {
+                    attr {
+                        text("当前版本 ${WhatsNewVersion.current()}")
+                        fontSize(13f)
+                        color(0xFF999999)
+                    }
+                }
             }
         }
-
-        content.addChild(DivView()) {
-            attr { height(8f) }
-        }
-
-        content.addChild(TextView()) {
-            attr {
-                text("当前版本 ${WhatsNewVersion.current()}")
-                fontSize(13f)
-                color(0xFF999999)
-            }
-        }
-
-        return content
     }
 }

@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name             = "KuiklyWhatsNew"
-  spec.version          = "1.2.1"
+  spec.version          = "1.2.2"
   spec.summary          = "Cross-platform What's New component for KuiklyUI"
   spec.description      = <<-DESC
                         WhatsNew is a pure Kuikly DSL component (componentType: KuiklyView)

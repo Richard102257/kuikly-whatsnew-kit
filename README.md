@@ -13,6 +13,35 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 
 ---
 
+## 📸 运行截图
+
+下面两张图是 **Kuikly 在 Android 模拟器上真实渲染**出来的画面（不是原生 View 仿写、
+也不是设计稿）。渲染的页面代码就是 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt)
+里那份 —— 和小程序 / H5 编译成 JS 的是同一份代码。
+
+| 首次启动：展示 What's New | 点「继续」后再次启动：已是最新版本 |
+|---|---|
+| <img src="docs/images/android-01-whatsnew.png" width="320" alt="Android WhatsNew 首屏"> | <img src="docs/images/android-02-caught-up.png" width="320" alt="Android 已是最新版本"> |
+
+截图对应的行为链路：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 → 点击主按钮
+写入 `SharedPreferences` → 杀进程重启后 `whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。
+也就是说这两张图同时验证了**渲染**和**版本持久化**。
+
+### 各端截图状态（如实说明）
+
+| 平台 | 截图 | 说明 |
+|------|------|------|
+| Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
+| iOS | ⏳ 未覆盖 | 库本身有 iOS target 并已发布 XCFramework，但本机没有可直接运行的 iOS Demo 工程 |
+| HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
+| H5 | ⏳ 未覆盖 | `core-render-web` 未发布到 Maven / npm，需要先从 KuiklyUI 源码构建渲染器 |
+| 微信小程序 | ⏳ 未覆盖 | 需要微信开发者工具（本机未安装） |
+
+> 没有截图的平台不是「没实现」，而是**当前环境跑不起来**。库的 commonMain 代码是
+> 同一份，Android 能跑通意味着逻辑层是通的；UI 渲染差异需要各自容器验证，这里不假装验证过。
+
+---
+
 ## 📦 安装
 
 ### 单一依赖（Android，推荐）
@@ -35,7 +64,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
             }
         }
     }
@@ -64,7 +93,7 @@ project(":whatsnew").projectDir = file("../kuikly-whatsnew-kit/whatsnew")
 
 ```ruby
 # Podfile
-pod 'KuiklyWhatsNew', '~> 1.2.1'
+pod 'KuiklyWhatsNew', '~> 1.2.2'
 ```
 
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-KuiklyWhatsNew-red)](https://cocoapods.org/pods/KuiklyWhatsNew)
@@ -166,7 +195,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1")
+                implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2")
             }
         }
     }
@@ -305,8 +334,8 @@ val whatsNew = WhatsNew(
 
 | Platform | 依赖方式 | Status |
 |----------|----------|--------|
-| Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.1` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
-| iOS | ① `pod 'KuiklyWhatsNew', '~> 1.2.1'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
+| Android | JitPack `com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.2` | ✅ 已验证（AAR + Demo APK + 第三方工程） |
+| iOS | ① `pod 'KuiklyWhatsNew', '~> 1.2.2'` ② 源码模块 | ✅ 已验证（trunk 发布 + 真实 `pod install` + 第三方工程） |
 | HarmonyOS | 源码模块（无 Maven 产物） | ⚠️ 代码就绪，需 2 步手动配置，未实机验证 |
 | Web (H5) | JitPack（js klib） | ✅ 已验证（klib + 9 个 node 单测 + 第三方 `jsNodeRun`；H5 壳工程未在本机跑） |
 | Mini Programs | JitPack（js klib） | ✅ 已验证（同上 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |

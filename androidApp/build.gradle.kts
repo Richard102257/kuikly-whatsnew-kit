@@ -24,6 +24,8 @@ android {
 
 dependencies {
     implementation(project(":shared"))
+    // Kuikly 页面（WhatsNewDemoPage）—— 与小程序 / H5 共用同一份 commonMain 代码
+    implementation(project(":miniApp"))
     // shared 里用的是 implementation(project(":whatsnew"))，不会传递到 app 的编译类路径
     implementation(project(":whatsnew"))
 

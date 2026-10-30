@@ -83,6 +83,52 @@ current=1.2.0 persistent=false title=What's New
 > 把该 bundle 放进官方壳工程后即可在微信开发者工具 / 浏览器中预览，步骤见
 > [MINIAPP_zh.md](MINIAPP_zh.md)。
 
+## 3.2 Android 真实渲染截图（1.2.2）
+
+`:androidApp` 里新增 `KuiklyDemoActivity`，通过 Kuikly 官方的
+`KuiklyRenderViewBaseDelegator.onAttach` 渲染 `:miniApp` 的 `WhatsNewDemoPage` ——
+**和微信小程序 / H5 编译成 JS 的是同一份 commonMain 页面代码**，没有原生 View 仿写。
+
+| 截图 | 说明 |
+|------|------|
+| <img src="images/android-01-whatsnew.png" width="260"> | `WhatsNewView` 首屏：标题居中、3 条 feature（emoji 图标 + 标题 + 换行副标题）、次按钮「查看更新日志」、主按钮「继续」 |
+| <img src="images/android-02-caught-up.png" width="260"> | 点「继续」→ 杀进程重启：`whatsNew()` 返回 `null`，走「已经是最新版本 🎉 / 当前版本 1.2.0」分支 |
+
+复现命令：
+
+```bash
+# 1. 构建 APK（:androidApp 依赖 :miniApp 的 Kuikly 页面）
+./gradlew :androidApp:assembleDebug
+adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+
+# 2. 清掉已展示记录，首屏
+adb shell pm clear io.github.Richard102257.whatsnew.demo
+adb shell am start -n io.github.Richard102257.whatsnew.demo/.MainActivity
+adb exec-out screencap -p > docs/images/android-01-whatsnew.png
+
+# 3. 点「继续」（1080x2400 上约 540,2175）→ 重启看持久化效果
+adb shell input tap 540 2175
+adb shell am force-stop io.github.Richard102257.whatsnew.demo
+adb shell am start -n io.github.Richard102257.whatsnew.demo/.MainActivity
+adb exec-out screencap -p > docs/images/android-02-caught-up.png
+```
+
+环境：AVD `Medium_Phone_API_37.0`（Android 15 / API 37，x86_64），
+`-gpu angle_indirect`（`host` 会 SIGSEGV，`swiftshader_indirect` 卡到 System UI ANR）。
+
+### 3.3 这一轮修掉的 3 个真实渲染 bug
+
+1.2.1 的 Android 渲染实际上是**不可用**的（截图是这轮第一次真正跑出来的）：
+
+| # | 现象 | 根因 | 修复 |
+|---|------|------|------|
+| 1 | `KuiklyRenderViewExportException: can not find viewExport, name: WhatsNewView` | `WhatsNewView.viewName()` 返回自定义名字，但纯 DSL 组件没有注册平台 View | 改为 `ViewConst.TYPE_VIEW`（`com.tencent.kuikly.core.base`） |
+| 2 | `RuntimeException: pager id is empty`，且 `attr {}` 静默失效 | `val v = DivView(); v.attr{}; addChild(v)` —— 脱离父容器创建时 `pagerId` 为空 | 全部改成 `addChild(DivView()) { ... }` 惯用写法 |
+| 3 | 标题不居中、副标题被截断成「编译成 JS 即…」 | Kuikly 的 `TextView` 默认单行 + 省略号；且 `alignItems(FLEX_START)` 下拿不到确定宽度 | 标题外层加 `alignItems(CENTER)` 容器；文本容器改 `STRETCH` + `lines(10)` + `textOverFlowWordWrapping()` |
+
+> `lines(0)` 在 Android 上等价于 `TextView.setMaxLines(0)`，整段文字会直接不显示，
+> 所以这里用的是 `lines(10)`。
+
 ## 4. iOS 分发
 
 ### 4.1 XCFramework（1.2.0，Kuikly 2.4.0）

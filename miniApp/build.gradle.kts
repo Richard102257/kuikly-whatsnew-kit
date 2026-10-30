@@ -44,10 +44,14 @@ kotlin {
 }
 
 dependencies {
-    // @Page 注册由 Kuikly KSP 生成
+    // @Page 注册由 Kuikly KSP 生成。
+    //
+    // 只给 JS 用：KMP + KSP 的 Android 目标生成的类不会进 AGP 的
+    // `runtime_library_classes_jar`（只在 aar_main_jar 里），下游 App 运行时
+    // 会报 ClassNotFoundException: com.tencent.kuikly.core.android.KuiklyCoreEntry。
+    // Android 侧改成在 :androidApp 里手写同名入口，见 KuiklyCoreEntry.kt。
     compileOnly("com.tencent.kuikly-open:core-ksp:$kuiklyVersion") {
         add("kspJs", this)
-        add("kspAndroid", this)
     }
 }
 
@@ -64,7 +68,7 @@ configure<KuiklyConfig> {
 }
 
 android {
-    namespace = "io.github.Richard102257.whatsnew.demo"
+    namespace = "io.github.Richard102257.whatsnew.miniapp"
     compileSdk = 34
     defaultConfig { minSdk = 21 }
     compileOptions {

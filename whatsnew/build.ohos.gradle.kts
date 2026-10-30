@@ -16,7 +16,7 @@ plugins {
 
 object MavenConfig {
     const val GROUP = "io.github.Richard102257"
-    const val VERSION_OHOS = "1.2.1_ohos"
+    const val VERSION_OHOS = "1.2.2_ohos"
 }
 
 // 与 whatsnew/build.gradle.kts 保持一致
