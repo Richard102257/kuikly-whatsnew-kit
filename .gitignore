@@ -41,6 +41,8 @@ captures/
 Pods/
 *.xcworkspace
 *.xcuserdata
+# Podfile.lock 里记的是本机 OpenKuiklyIOSRender 的绝对路径，不入库
+iosApp/Podfile.lock
 
 # HarmonyOS
 .hvigor/

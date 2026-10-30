@@ -180,6 +180,77 @@ python3 -m http.server 8099 --directory build/distributions
 另外 `window.kotlin` 在 UMD 包里不会暴露到全局，壳里的 `SizeI` 用的是渲染器导出的
 构造器，所以不需要 Kotlin stdlib 全局对象。
 
+## 3.5 iOS 真实渲染截图
+
+| 截图 | 说明 |
+|------|------|
+| <img src="images/ios-01-whatsnew.png" width="240"> | iPhone 16 Pro 模拟器（iOS 18.3），Kotlin/Native `shared.framework` + 官方 `OpenKuiklyIOSRender` 渲染 |
+| <img src="images/ios-02-caught-up.png" width="240"> | UI 测试真点了一下「继续」→ 重启 App：`NSUserDefaults` 里已有 `presented_all=1.2.0`，走「已经是最新版本」分支 |
+
+页面源码是 [`shared/src/iosMain/.../WhatsNewIosDemoPage.kt`](../shared/src/iosMain/kotlin/io/github/Richard102257/whatsnew/shared/WhatsNewIosDemoPage.kt)，
+组件本身还是 `:whatsnew` 的 commonMain 代码。和 Android / H5 页面相比只差两点：
+
+- 不 override 版本号，直接读 `CFBundleShortVersionString`（Info.plist 写死 `1.2.0`）
+- 外层包了一个 Kuikly 的 `SafeArea`，否则标题会被灵动岛压住（`pagerData.safeAreaInsets`
+  在 iOS 上是真实值，Android / H5 上是 0）
+
+### 3.5.1 复现步骤
+
+```bash
+# 1. 生成 podspec + 编出模拟器用的 framework
+#    Intel Mac 是 x86_64 切片，Apple Silicon 改成 arm64
+./gradlew :shared:podspec :shared:syncFramework \
+  -Pkotlin.native.cocoapods.platform=iphonesimulator \
+  -Pkotlin.native.cocoapods.archs=x86_64 \
+  -Pkotlin.native.cocoapods.configuration=Debug
+
+# 2. 生成 Xcode 工程 + 装 pod（渲染器走 KuiklyUI 源码 pod）
+ruby iosApp/generate_project.rb
+cd iosApp
+KUIKLYUI_PATH=/path/to/KuiklyUI pod install
+
+# 3. 编译 & 安装
+xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug \
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -derivedDataPath build/DerivedData build
+
+# 4. UI 测试真点一下「继续」（写 NSUserDefaults）
+xcodebuild test -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug \
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -derivedDataPath build/DerivedData
+
+# 5. 重启 App 截「已是最新版本」
+xcrun simctl launch booted io.github.Richard102257.whatsnew.demo
+xcrun simctl io booted screenshot ios-02-caught-up.png
+```
+
+`pod install` 之后 Xcode 里那个 `Build shared` 脚本阶段会自动跑 Gradle 的 `syncFramework`；
+如果已经手动编过，可以用 `OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES` 跳过。
+
+### 3.5.2 踩到的三个坑
+
+1. **Intel Mac 必须编 `iosX64` 切片**
+   只编 `iosSimulatorArm64` 的话链接器只会打一行
+   `ld: warning: ignoring file '.../shared.framework/shared[2](shared.framework.o)':
+   found architecture 'arm64', required architecture 'x86_64'`，
+   App 能装能启动，页面却是**全白**（`KuiklyCoreEntry` 根本不在二进制里）。
+   这个 warning 很容易被淹没在 xcodebuild 的日志里。
+
+2. **入口类名是 `SharedKuiklyCoreEntry`**
+   KSP 生成的 Kotlin 类叫 `KuiklyCoreEntry`，但 Kotlin/Native 导出成 ObjC 时会加上
+   framework 前缀；渲染器 `entryClassWithFrameworkName:` 拼的是「首字母大写的
+   framework 名 + KuiklyCoreEntry」，所以 `frameworkName:@"shared"` 正好对上
+   `SharedKuiklyCoreEntry`。framework 名改了这里也要跟着改。
+
+3. **必须自己处理安全区**
+   `KuiklyRenderViewControllerBaseDelegator` 会把 renderView 铺满整个 window，
+   页面从 y=0 开始画，标题会压在灵动岛下面。用 Kuikly 自带的 `SafeArea` 包一层即可，
+   不需要在宿主里改 frame。
+
+另外，Kuikly 的视图树默认不导出 accessibilityIdentifier，所以
+`iosAppUITests/WhatsNewUITests.swift` 用归一化坐标（`dy = 0.885`）点主按钮 —— 点的是
+真实屏幕位置，不是伪造状态。
+
 ## 4. iOS 分发
 
 ### 4.1 XCFramework（1.2.0，Kuikly 2.4.0）

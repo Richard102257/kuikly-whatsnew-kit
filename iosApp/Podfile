@@ -1,13 +1,20 @@
-platform :ios, '13.0'
-use_frameworks!
+platform :ios, '15.0'
+source 'https://cdn.cocoapods.org/'
+
+# Kuikly 渲染器以源码 pod 引入（KuiklyUI 仓库根目录的 OpenKuiklyIOSRender.podspec）。
+# 本地跑：KUIKLYUI_PATH=/path/to/KuiklyUI pod install
+renderer_path = ENV['KUIKLYUI_PATH'] || '../../KuiklyUI'
 
 target 'iosApp' do
-  # Kuikly 核心
-  pod 'Kuikly', :path => '../'
+  pod 'OpenKuiklyIOSRender', :path => renderer_path
+  # Kotlin/Native framework（shared.framework），由 :shared:syncFramework 产出
+  pod 'shared', :path => '../shared'
+end
 
-  # WhatsNewKit iOS 平台侧
-  pod 'whatsnewIOS', :path => '../'
-
-  # Demo 共享模块
-  pod 'shared', :path => '../'
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
+  end
 end

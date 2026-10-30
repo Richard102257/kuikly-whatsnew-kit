@@ -16,9 +16,10 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 ## 📸 运行截图
 
 所有截图都是 **Kuikly 真实渲染**出来的画面（不是原生 View 仿写、也不是设计稿）。
-渲染的页面代码是 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt)
-里那份 —— Android 和 H5 跑的是同一份 commonMain 代码，H5 就是把它编译成 JS 后
-放进 Kuikly 官方 `h5App-js` 壳里。
+三端渲染的都是同一份 `:whatsnew` commonMain 组件代码：
+
+- Android / H5 跑 [`miniApp/src/commonMain`](miniApp/src/commonMain/kotlin/io/github/Richard102257/whatsnew/demo/WhatsNewDemoPage.kt) 里的页面（H5 是把这份代码编译成 JS 后放进 Kuikly 官方 `h5App-js` 壳）
+- iOS 跑 [`shared/src/iosMain`](shared/src/iosMain/kotlin/io/github/Richard102257/whatsnew/shared/WhatsNewIosDemoPage.kt) 里的页面，编译成 Kotlin/Native `shared.framework`
 
 ### Android（模拟器，Kuikly `2.4.0-2.0.21`）
 
@@ -26,16 +27,30 @@ Inspired by [SvenTiigi/WhatsNewKit](https://github.com/SvenTiigi/WhatsNewKit) �
 |---|---|
 | <img src="docs/images/android-01-whatsnew.png" width="320" alt="Android WhatsNew 首屏"> | <img src="docs/images/android-02-caught-up.png" width="320" alt="Android 已是最新版本"> |
 
+### iOS（iPhone 16 Pro 模拟器，iOS 18.3）
+
+| 首次启动：展示 What's New | 点「继续」后再次启动：已是最新版本 |
+|---|---|
+| <img src="docs/images/ios-01-whatsnew.png" width="320" alt="iOS WhatsNew 首屏"> | <img src="docs/images/ios-02-caught-up.png" width="320" alt="iOS 已是最新版本"> |
+
+iOS 侧是官方 `OpenKuiklyIOSRender` 渲染器 + Kotlin/Native framework，版本号直接读
+`CFBundleShortVersionString`（Info.plist 里是 `1.2.0`），存储走 `NSUserDefaults`。
+页面用 Kuikly 的 `SafeArea` 避开灵动岛和底部横条，其余布局与 Android / H5 完全一致。
+
 ### H5（Chromium，`core-render-web` 渲染器）
 
 | 首次启动：展示 What's New | 点「继续」后刷新：已是最新版本 |
 |---|---|
 | <img src="docs/images/h5-01-whatsnew.png" width="320" alt="H5 WhatsNew 首屏"> | <img src="docs/images/h5-02-caught-up.png" width="320" alt="H5 已是最新版本"> |
 
-截图对应的行为链路（两端一致）：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 →
-点击主按钮写入本地存储（Android `SharedPreferences` / H5 `localStorage`）→ 重启 / 刷新后
-`whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。也就是说这些图同时验证了
-**渲染**和**版本持久化**。
+截图对应的行为链路（三端一致）：首屏由 `WhatsNewEnvironment.whatsNew()` 按版本号匹配 →
+点击主按钮写入本地存储（Android `SharedPreferences` / iOS `NSUserDefaults` / H5 `localStorage`）→
+重启 / 刷新后 `whatsNew()` 返回 `null`，页面走「已经是最新版本」分支。也就是说这些图
+同时验证了**渲染**和**版本持久化**。
+
+> iOS 的「点继续」不是手工点的：`iosApp/iosAppUITests` 里的 UI 测试用归一化坐标真点了一下
+> 页面底部的按钮，然后再重启 App 截图。命令见
+> [docs/VERIFICATION.md](docs/VERIFICATION.md#35-ios-真实渲染截图)。
 
 H5 这一套不是「一键跑起来」的：`core-render-web` 没有发布到 Maven / npm，渲染器要从
 KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地壳里绕过。
@@ -46,13 +61,13 @@ KuiklyUI 源码构建，另外 Kotlin/JS 2.0.21 有个导出 bug 需要在本地
 | 平台 | 截图 | 说明 |
 |------|------|------|
 | Android | ✅ 已覆盖 | 上面的两张，AVD `Medium_Phone_API_37.0` + Kuikly `2.4.0-2.0.21` |
-| iOS | ⏳ 未覆盖 | 库本身有 iOS target 并已发布 XCFramework，但本机没有可直接运行的 iOS Demo 工程 |
+| iOS | ✅ 已覆盖 | 上面的两张，iPhone 16 Pro 模拟器（iOS 18.3）+ Kotlin/Native `shared.framework` + `OpenKuiklyIOSRender` |
 | HarmonyOS | ⏳ 未覆盖 | 需要 DevEco Studio + OHOS SDK，`core-render-ohos` 也没有公开 Maven 产物 |
 | H5 | ✅ 已覆盖 | 上面的两张，Chromium + `core-render-web`（源码构建）+ 官方 `h5App-js` 壳 |
 | 微信小程序 | ⏳ 未覆盖 | 需要微信开发者工具（本机未安装） |
 
 > 没有截图的平台不是「没实现」，而是**当前环境跑不起来**。库的 commonMain 代码是
-> 同一份，Android 能跑通意味着逻辑层是通的；UI 渲染差异需要各自容器验证，这里不假装验证过。
+> 同一份，Android / iOS / H5 都跑通意味着逻辑层是通的；鸿蒙和小程序的容器差异这里不假装验证过。
 
 ---
 
@@ -187,9 +202,11 @@ kuikly-whatsnew-kit/
 │       └── jsTest/           # 伪造 wx / localStorage 的 JS 单测（9 个）
 │
 ├── KuiklyWhatsNew.podspec          # iOS 分发（预编译 XCFramework）
-├── androidApp/ + shared/     # Android Demo
+├── androidApp/               # Android Demo 宿主（KuiklyRenderViewBaseDelegator）
+├── shared/                   # Demo 共享模块 + iOS 页面（Kotlin/Native framework）
 ├── miniApp/                  # 小程序 / H5 Demo 业务模块（js + KSP + Kuikly 插件）
-├── iosApp/ ohosApp/ h5App/   # 其他平台 Demo 工程
+├── iosApp/                   # iOS Demo（Xcode 工程由 generate_project.rb 生成）
+├── ohosApp/ h5App/           # 鸿蒙 / H5 Demo 工程
 ├── docs/                     # 文档（CI 工作流模板在 docs/ci/）
 └── preview/                  # 在线预览
 ```
