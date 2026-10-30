@@ -27,15 +27,36 @@ JS 单测（`whatsnew/src/jsTest/.../PlatformJsTest.kt`）在 node 里伪造 `wx
 （wx storage / localStorage / 内存兜底）、与原生平台一致的逗号分隔存储格式、
 `WhatsNewEnvironment` 的自动展示与去重。
 
-## 2. Android 分发（JitPack）
+## 2. Android / JS 分发（JitPack）
 
-- 坐标：`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.1.1`
-- 实测 HTTP 200：`whatsnew-1.1.1.pom`、`whatsnew-1.1.1.module`、`whatsnew-android-1.1.1.aar`
+- 坐标：`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0`
+- JitPack 构建状态：`ok`（tag `v1.2.0`）
+- 实测 HTTP 200（1.2.0）：
 
-**第三方接入实测**：新建独立 KMP 工程，只声明上面的 JitPack 依赖（`androidMain`），代码里使用
-`whatsNewCollection {}`、`WhatsNewView().setup(...)`、`WhatsNewEnvironment`、
-`createPersistentWhatsNewVersionStore()`、`ViewContainer<*, *>.addChild(...)` ——
-`:compileDebugKotlinAndroid` BUILD SUCCESSFUL。
+| 文件 | 大小 |
+|------|------|
+| `whatsnew/1.2.0/whatsnew-1.2.0.pom` | 1,548 B |
+| `whatsnew/1.2.0/whatsnew-1.2.0.module` | 5,498 B（含 `jsApiElements` / `jsRuntimeElements` 变体） |
+| `whatsnew-android/1.2.0/whatsnew-android-1.2.0.aar` | 69,551 B（`classes.jar` 75,338 B） |
+| `whatsnew-js/1.2.0/whatsnew-js-1.2.0.klib` | 71,296 B |
+| `whatsnew-js/1.2.0/whatsnew-js-1.2.0.pom` | 1,782 B |
+
+**Android 第三方接入实测（1.1.1 时完成，API 未变）**：新建独立 KMP 工程，只声明 JitPack 依赖
+（`androidMain`），代码里使用 `whatsNewCollection {}`、`WhatsNewView().setup(...)`、
+`WhatsNewEnvironment`、`createPersistentWhatsNewVersionStore()`、
+`ViewContainer<*, *>.addChild(...)` —— `:compileDebugKotlinAndroid` BUILD SUCCESSFUL。
+
+**JS 第三方接入实测（1.2.0）**：新建独立 KMP 工程，只声明
+`implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")`
++ `js(IR) { browser(); nodejs(); binaries.executable() }`，
+`:jsNodeRun` 输出：
+
+```
+current=1.2.0 persistent=false title=What's New
+```
+
+即 Gradle 通过 `org.jetbrains.kotlin.platform.type=js` 自动选中 JitPack 上的
+`whatsnew-js` klib，不需要任何额外配置。
 
 ## 3. Demo 工程
 
@@ -62,9 +83,9 @@ JS 单测（`whatsnew/src/jsTest/.../PlatformJsTest.kt`）在 node 里伪造 `wx
 
 ## 4. iOS 分发
 
-### 4.1 XCFramework
+### 4.1 XCFramework（1.2.0，Kuikly 2.4.0）
 
-`./gradlew :whatsnew:assembleWhatsNewReleaseXCFramework`（macOS + Xcode 16.2）→ ✅ 9m41s
+`./gradlew :whatsnew:assembleWhatsNewXCFramework`（macOS + Xcode 16.2）→ ✅ 6m42s
 
 ```
 WhatsNew.xcframework
@@ -72,36 +93,41 @@ WhatsNew.xcframework
 └── ios-arm64_x86_64-simulator/WhatsNew.framework    (x86_64 + arm64, 静态)
 ```
 
-`LC_BUILD_VERSION`: `platform 2 / minos 12.0 / sdk 18.2`；`Info.plist` 为 `XFWK 1.0`。
+打包：`WhatsNew.xcframework.zip`（5,436,328 B），
+sha256 `d110422a52c5cc462d73d7946da6a258d895a6f7fd43152d2c709078b4be9695`，
+挂在 GitHub Release `v1.2.0`，下载 URL 实测可拉全量且 sha256 一致：
 
-打包：`WhatsNew.xcframework.zip`（5.2 MB，含 `LICENSE`），
-sha256 `dfaf9f0762bf18be936d693d07d0e9a240ea0f6bd0cffabdea61ae0a4d031a15`，
-挂在 GitHub Release `v1.1.1`，下载 URL 实测可拉全量（`http=200 size=5419733`）。
+```
+https://github.com/Richard102257/kuikly-whatsnew-kit/releases/download/v1.2.0/WhatsNew.xcframework.zip
+```
 
 ### 4.2 CocoaPods
 
 | 检查项 | 结果 |
 |--------|------|
 | `pod spec lint KuiklyWhatsNew.podspec --quick --allow-warnings` | ✅ passed validation |
-| `pod spec lint KuiklyWhatsNew.podspec --allow-warnings`（完整编译 + 链接） | ✅ passed validation |
-| `pod trunk push`（实际发布） | ✅ `KuiklyWhatsNew 1.1.1`，2026-10-29 16:31 UTC |
+| `pod trunk push KuiklyWhatsNew.podspec --allow-warnings`（本地完整编译 + 链接） | ✅ 通过（xcodebuild 4 targets） |
+| 实际发布结果 | ✅ `KuiklyWhatsNew 1.2.0`，2026-10-30 04:02:33 UTC（trunk API 确认） |
 | trunk 所有者 | `Richard <lhui1022@gmail.com>` |
-| CDN 上可读到 podspec | ✅ `https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.1.1/KuiklyWhatsNew.podspec.json` |
-| 真实工程 `pod install` | ✅ `Installing KuiklyWhatsNew (1.1.1)` + `OpenKuiklyIOSRender (2.30.0)` |
+| CDN 上可读到 podspec | ✅ `https://cdn.cocoapods.org/Specs/a/6/0/KuiklyWhatsNew/1.2.0/KuiklyWhatsNew.podspec.json` |
+| 真实工程 `pod install`（本地 podspec 指向 1.2.0） | ✅ `Installing KuiklyWhatsNew (1.2.0)` + `OpenKuiklyIOSRender (2.30.0)`，`Pods/KuiklyWhatsNew/WhatsNew.xcframework` 两个切片就位 |
 
-`pod install` 实测（干净目录，仅 Podfile）：
-
-```ruby
-install! 'cocoapods', :integrate_targets => false
-platform :ios, '13.0'
-target 'App' do
-  pod 'KuiklyWhatsNew', '~> 1.1.1'
-end
-```
-
-结果：`Pods/KuiklyWhatsNew/WhatsNew.xcframework`（两个切片）+ `LICENSE` 就位。
-
-> CDN 索引有约 10 分钟缓存，刚发布后第一次安装可能需要 `pod install --repo-update`。
+> `pod trunk push` 命令本身会以 exit 1 结束，报
+> `Calling the GitHub commit API timed out` —— 那是 trunk 把 spec 镜像到 GitHub 仓库的
+> 后续步骤受 `github.com:443` 超时影响，**版本已经发布成功**（trunk API 的 `versions`
+> 里已有 `1.2.0`，CDN 也能取到 spec）。
+>
+> CDN 的 `all_pods_versions_*.txt` 索引由后台任务定期重建，刚发布后
+> `pod install '~> 1.2.0'` 可能短暂解析不到（1.2.0 发布 13 分钟后索引里仍只有 1.1.1）；
+> 这期间可以用本地 podspec 验证：
+>
+> ```ruby
+> pod 'KuiklyWhatsNew', :podspec => './KuiklyWhatsNew.podspec'
+> ```
+>
+> 1.1.1 时的实测是索引更新后 `pod install` 正常解析
+> （`Installing KuiklyWhatsNew (1.1.1)` + `OpenKuiklyIOSRender (2.30.0)`，
+> `Pods/KuiklyWhatsNew/WhatsNew.xcframework` 两个切片就位）。
 
 pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用，故发布名为
 `KuiklyWhatsNew`；framework 名与代码 `import` 不受影响。
@@ -111,6 +137,9 @@ pod 名说明：`WhatsNew` 在 trunk 上已被 `me@patrickbalestra.com` 占用�
 - 本机 Xcode 16.2 出厂未带 iOS 平台，需先 `xcodebuild -downloadPlatform iOS`（约 8.7 GB）。
   未安装时 `pod spec lint` 会报
   `iOS 18.2 is not installed. To use with Xcode, first download and install the platform`。
-- JitPack 在 Linux 上构建，只能产出 Android + 公共元数据；iOS klib / XCFramework 必须在 macOS 上构建。
+- JitPack 在 Linux 上构建，能产出 Android AAR + JS klib + 公共元数据；
+  iOS klib / XCFramework 必须在 macOS 上构建。
+- JitPack 构建 js target 需要下载 Node.js / yarn（Kotlin/JS 插件自管理），
+  `kotlin-js-store/yarn.lock` 已提交，避免 `Lock file was changed` 失败。
 - `OpenKuiklyIOSRender` 依赖在本地 lint 时通过 `git url.insteadOf` 指向一份
   `core-render-ios` 子集仓库，以规避 `github.com` 拉取超时；正式 lint / push 使用 trunk 上的 2.30.0。

@@ -8,6 +8,7 @@
 |------|------|----------|----------|
 | Android | AAR + klib | Linux / macOS | JitPack |
 | 公共元数据 | klib | Linux / macOS | JitPack |
+| JS（Web / 微信小程序） | `whatsnew-js-*.klib` | Linux / macOS | JitPack |
 | iOS | XCFramework | **仅 macOS** | CocoaPods（预编译）+ GitHub Release |
 | HarmonyOS | klib / .so | Kuikly ohos 工具链 | Maven / 手动 |
 
@@ -49,7 +50,23 @@ implementation("com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.2.0")
 
 # 单元测试（纯逻辑：版本解析/比较、版本存储、DSL Builder）
 ./gradlew :whatsnew:testDebugUnitTest
+
+# JS 单测（node，伪造 wx / localStorage）
+./gradlew :whatsnew:jsNodeTest
 ```
+
+> **JS 目标与 yarn lock**：`js(IR)` 目标让 JitPack 的 Linux 构建也要跑 Node/yarn。
+> 新增或修改 js 模块后必须重新生成并提交 `kotlin-js-store/yarn.lock`：
+>
+> ```bash
+> ./gradlew kotlinUpgradeYarnLock
+> git add kotlin-js-store/yarn.lock
+> ```
+>
+> 否则 JitPack 会以 `Lock file was changed` 失败。
+>
+> 验证产物：`whatsnew-js-1.2.0.klib` 与 `whatsnew-js-1.2.0.pom` 应能在
+> `https://jitpack.io/com/github/Richard102257/kuikly-whatsnew-kit/whatsnew-js/1.2.0/` 下 200 下载。
 
 ---
 
@@ -127,6 +144,19 @@ pod trunk push KuiklyWhatsNew.podspec --allow-warnings
 ```
 
 `pod trunk push` 没有 `--quick` / `--skip-build` 之类的开关，本地校验不通过就无法发布。
+
+> **实测提醒（1.2.0）**：`pod trunk push` 可能在最后一步报
+> `[!] Calling the GitHub commit API timed out` 并以 exit 1 结束。
+> 这是 trunk 把 spec 镜像到 GitHub 仓库的后续动作受 `github.com:443` 超时影响，
+> **版本通常已经发布成功**。用下面的命令确认，不要盲目重推（重推会得到 409 / already exists）：
+>
+> ```bash
+> curl -s https://trunk.cocoapods.org/api/v1/pods/KuiklyWhatsNew | python3 -m json.tool
+> # versions 里出现目标版本即成功
+> ```
+>
+> CDN 的 `all_pods_versions_*.txt` 索引由后台任务定期重建，
+> 刚发布后 `pod install '~> X.Y.Z'` 可能短暂解析不到，等索引更新即可。
 
 ---
 

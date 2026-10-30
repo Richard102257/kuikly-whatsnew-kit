@@ -300,11 +300,11 @@ val whatsNew = WhatsNew(
 
 | Platform | Status |
 |----------|--------|
-| Android | ✅ 已验证（JitPack AAR + Demo APK） |
-| iOS | ✅ 已验证（XCFramework + CocoaPods trunk） |
+| Android | ✅ 已验证（JitPack AAR `1.2.0` + Demo APK） |
+| iOS | ✅ 已验证（XCFramework 1.2.0 + CocoaPods trunk `KuiklyWhatsNew 1.2.0`） |
 | HarmonyOS | ✅ 代码就绪（`ohosArm64Main` expect/actual；本机无鸿蒙工具链，未实机验证） |
-| Web (H5) | ✅ 代码就绪（`jsMain` + 9 个 node 单测；H5 壳工程未在本机跑） |
-| Mini Programs | ✅ 代码就绪（`jsMain` + 9 个 node 单测 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |
+| Web (H5) | ✅ 已验证（`jsMain` + 9 个 node 单测 + JitPack `whatsnew-js` klib 第三方接入；H5 壳工程未在本机跑） |
+| Mini Programs | ✅ 已验证（同上 + 真实 bundle 构建；本机无微信开发者工具，未实机预览） |
 
 ---
 

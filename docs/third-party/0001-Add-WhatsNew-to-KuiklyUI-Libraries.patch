@@ -1,4 +1,4 @@
-From fbc93aef7304e87ffd5b963db1575b7b22ad1bbf Mon Sep 17 00:00:00 2001
+From af088b2f6009e1a4ccb6fdf3785073fc9e447789 Mon Sep 17 00:00:00 2001
 From: Richard102257 <lhui1022@gmail.com>
 Date: Thu, 29 Oct 2026 22:48:55 +0800
 Subject: [PATCH] Add WhatsNew to KuiklyUI-Libraries.json
@@ -8,7 +8,7 @@ Subject: [PATCH] Add WhatsNew to KuiklyUI-Libraries.json
  1 file changed, 15 insertions(+)
 
 diff --git a/KuiklyUI-Libraries.json b/KuiklyUI-Libraries.json
-index 6eeeba8..298e3dd 100644
+index 6eeeba8..f2e43c7 100644
 --- a/KuiklyUI-Libraries.json
 +++ b/KuiklyUI-Libraries.json
 @@ -1742,5 +1742,20 @@
@@ -22,13 +22,13 @@ index 6eeeba8..298e3dd 100644
 +      "https://github.com/Richard102257/kuikly-whatsnew-kit"
 +    ],
 +    "componentName": "WhatsNew",
-+    "componentDescription": "Kuikly 跨端「What's New / 更新日志」组件，参考 SvenTiigi/WhatsNewKit。纯 Kuikly DSL 实现：自动/手动展示、版本追踪持久化、patch 版本回退、可自定义布局、主/次按钮（支持打开 URL 与自定义回调）。",
++    "componentDescription": "Kuikly 跨端「What's New / 更新日志」组件，参考 SvenTiigi/WhatsNewKit。纯 Kuikly DSL 实现：自动/手动展示、版本追踪持久化、patch 版本回退、可自定义布局、主/次按钮（支持打开 URL 与自定义回调）。支持 Android / iOS / HarmonyOS / H5 / 微信小程序。",
 +    "componentType": "KuiklyView",
 +    "developer": "Richard102257",
 +    "Android": true,
 +    "iOS": true,
 +    "Ohos": true,
-+    "Js": false,
++    "Js": true,
 +    "sDynamic": false
    }
  ]
