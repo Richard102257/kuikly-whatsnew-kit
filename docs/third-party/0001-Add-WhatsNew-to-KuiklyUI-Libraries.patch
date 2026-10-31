@@ -1,17 +1,17 @@
-From 36a391052e570cdb08c9eb64782adca92d33f745 Mon Sep 17 00:00:00 2001
+From c72f8a20d0b985205be4d40ec43e377052aa3f31 Mon Sep 17 00:00:00 2001
 From: richard <lhui1022@gmail.com>
 Date: Sat, 31 Oct 2026 09:01:16 +0800
 Subject: [PATCH] Add WhatsNew to KuiklyUI-Libraries.json
 
 ---
- KuiklyUI-Libraries.json | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ KuiklyUI-Libraries.json | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
 diff --git a/KuiklyUI-Libraries.json b/KuiklyUI-Libraries.json
-index 6eeeba8..280224e 100644
+index 6eeeba8..7a86ca3 100644
 --- a/KuiklyUI-Libraries.json
 +++ b/KuiklyUI-Libraries.json
-@@ -1742,5 +1742,23 @@
+@@ -1742,5 +1742,22 @@
      "Ohos": true,
      "Js": true,
      "sDynamic": true
@@ -21,7 +21,6 @@ index 6eeeba8..280224e 100644
 +    "examples": [
 +      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/androidApp",
 +      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/iosApp",
-+      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/ohosApp",
 +      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/h5App"
 +    ],
 +    "componentName": "WhatsNew",
@@ -30,7 +29,7 @@ index 6eeeba8..280224e 100644
 +    "developer": "Richard102257",
 +    "Android": true,
 +    "iOS": true,
-+    "Ohos": true,
++    "Ohos": false,
 +    "Js": true,
 +    "sDynamic": false
    }

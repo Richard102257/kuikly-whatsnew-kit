@@ -1,11 +1,11 @@
 # KuiklyUI-third-party 注册材料
 
-> **当前状态：fork 分支已更新（`36a3910`），fork 内 PR #1 已同步；上游 PR 待提交。**
+> **当前状态：fork 分支已更新（`c72f8a2`，`Ohos: false`），fork 内 PR #1 已同步；上游 PR 待提交。**
 >
 > - Fork：https://github.com/Richard102257/KuiklyUI-third-party
-> - 分支：`add-whatsnew`（commit `36a3910`，只改 `KuiklyUI-Libraries.json`，+18 行，共 114 个条目）
+> - 分支：`add-whatsnew`（commit `c72f8a2`，只改 `KuiklyUI-Libraries.json`，+17 行，共 114 个条目）
 > - **Fork 内 PR**：https://github.com/Richard102257/KuiklyUI-third-party/pull/1
->   （`add-whatsnew → main`，+18 −0，1 个文件）
+>   （`add-whatsnew → main`，+17 −0，1 个文件）
 > - **上游 PR**（真正合并进 KuiklyUI-third-party 的那个）：
 >   https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
 >
@@ -51,7 +51,6 @@ https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257
   "examples": [
     "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/androidApp",
     "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/iosApp",
-    "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/ohosApp",
     "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/h5App"
   ],
   "componentName": "WhatsNew",
@@ -60,7 +59,7 @@ https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257
   "developer": "Richard102257",
   "Android": true,
   "iOS": true,
-  "Ohos": true,
+  "Ohos": false,
   "Js": true,
   "sDynamic": false
 }
@@ -68,10 +67,11 @@ https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257
 
 > - 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码。
 > - `examples` 按模板「为支持的平台提供 Demo 地址、去掉不支持的」列出
->   `androidApp` / `iosApp` / `ohosApp` / `h5App` 四个平台 Demo 目录。
-> - `Js: true` 的依据是 JitPack 上有 `whatsnew-js-1.3.0.klib`（H5 / 小程序都用这份产物）；
->   `Ohos: true` 的依据是 `ohosArm64` klib 和完整 HAP 都能编出来（`ohosApp/`），
->   但**没有实机运行过**（Intel Mac 无官方模拟器、无真机、无签名账号），PR 描述里写明了。
+>   `androidApp` / `iosApp` / `h5App` 三个平台 Demo 目录。
+> - `Js: true` 的依据是 JitPack 上有 `whatsnew-js-1.3.0.klib`（H5 / 小程序都用这份产物）。
+> - `Ohos: false`：鸿蒙侧 `ohosArm64` klib 和完整 HAP 都能编出来（`ohosApp/`），
+>   但**没有实机运行过**（Intel Mac 无官方模拟器、无真机、无签名账号），所以暂标记为不支持，
+>   `ohosApp` 的 Demo 地址也一并从 `examples` 里去掉。
 > - `Macos` / `Linux` / `Windows` / `Tvos` 不支持，按模板省略不写。
 > - `sDynamic: false`：jsMain 依赖 `localStorage` / `wx.setStorageSync`（浏览器平台接口），
 >   不满足模板里 `sDynamic` 的判定条件。
@@ -153,9 +153,9 @@ override fun body(): ViewBuilder = {
 ### 平台支持
 - Android：JitPack AAR（`com.github.Richard102257.kuikly-whatsnew-kit:whatsnew:1.3.0`）
 - iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'KuiklyWhatsNew'`）
-- HarmonyOS：同一份 Kuikly DSL 代码，`./gradlew -c settings.ohos.gradle.kts :whatsnew:assemble`
-  （KBA Kotlin + `core:...-ohos` + ohpm `@kuikly-open/render`；HAP 构建见 `ohosApp/`）
 - H5 / 微信小程序：JitPack（js klib），复用同一份 commonMain 代码
+- HarmonyOS：暂不支持（`Ohos: false`）——同一份 DSL 代码能编出 `libshared.so` + HAP，
+  但本机无模拟器 / 真机，未做真机验证
 ```
 
 ## 4. 提交前检查
@@ -165,6 +165,8 @@ override fun body(): ViewBuilder = {
 - [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.3.0'`）
 - [x] README 中的版本号与 tag 一致
 - [x] 条目字段顺序 / 缩进符合官方模板，不支持的平台字段已省略
-- [x] fork 已建、分支 `add-whatsnew`（`36a3910`）已推，只改 1 个文件（+18 行）
+- [x] fork 已建、分支 `add-whatsnew`（`c72f8a2`）已推，只改 1 个文件（+17 行）
+- [x] 条目字段顺序 / 缩进符合官方模板，不支持的平台字段已省略
+- [x] `Ohos` 标记为 `false`，`ohosApp` 已从 `examples` 中去掉（未做真机验证）
 - [x] fork 内 PR #1 已同步到新 commit
 - [ ] 上游 PR 已提交（**待网页确认**：fine-grained PAT 对 Tencent-TDS 无 `push` 权限）
