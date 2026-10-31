@@ -1,17 +1,17 @@
-From c9a72c92fa82c45bc9af06e8fe43ee90b10eeaaa Mon Sep 17 00:00:00 2001
-From: Richard102257 <lhui1022@gmail.com>
-Date: Sat, 31 Oct 2026 07:12:59 +0800
+From 36a391052e570cdb08c9eb64782adca92d33f745 Mon Sep 17 00:00:00 2001
+From: richard <lhui1022@gmail.com>
+Date: Sat, 31 Oct 2026 09:01:16 +0800
 Subject: [PATCH] Add WhatsNew to KuiklyUI-Libraries.json
 
 ---
- KuiklyUI-Libraries.json | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ KuiklyUI-Libraries.json | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
 diff --git a/KuiklyUI-Libraries.json b/KuiklyUI-Libraries.json
-index 6eeeba8..45294d1 100644
+index 6eeeba8..280224e 100644
 --- a/KuiklyUI-Libraries.json
 +++ b/KuiklyUI-Libraries.json
-@@ -1742,5 +1742,20 @@
+@@ -1742,5 +1742,23 @@
      "Ohos": true,
      "Js": true,
      "sDynamic": true
@@ -19,7 +19,10 @@ index 6eeeba8..45294d1 100644
 +  {
 +    "githubUrl": "https://github.com/Richard102257/kuikly-whatsnew-kit",
 +    "examples": [
-+      "https://github.com/Richard102257/kuikly-whatsnew-kit"
++      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/androidApp",
++      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/iosApp",
++      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/ohosApp",
++      "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/h5App"
 +    ],
 +    "componentName": "WhatsNew",
 +    "componentDescription": "Kuikly 跨端「新功能引导」组件（SvenTiigi/WhatsNewKit 移植），支持自动/手动展示、版本追踪与 patch 回退、自定义布局、主次按钮，提供 Kuikly DSL 与 Compose 页面两种用法",
@@ -32,3 +35,6 @@ index 6eeeba8..45294d1 100644
 +    "sDynamic": false
    }
  ]
+-- 
+2.39.5 (Apple Git-154)
+

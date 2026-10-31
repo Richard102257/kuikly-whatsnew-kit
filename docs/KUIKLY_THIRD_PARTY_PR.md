@@ -1,17 +1,17 @@
 # KuiklyUI-third-party 注册材料
 
-> **当前状态：fork 内 PR 已建；上游 PR 待点一下链接。**
+> **当前状态：fork 分支已更新（`36a3910`），fork 内 PR #1 已同步；上游 PR 待提交。**
 >
 > - Fork：https://github.com/Richard102257/KuiklyUI-third-party
-> - 分支：`add-whatsnew`（commit `c9a72c9`，只改 `KuiklyUI-Libraries.json`，+15 行）
+> - 分支：`add-whatsnew`（commit `36a3910`，只改 `KuiklyUI-Libraries.json`，+18 行，共 114 个条目）
 > - **Fork 内 PR**：https://github.com/Richard102257/KuiklyUI-third-party/pull/1
->   （`add-whatsnew → main`，+15 −0，1 个文件，MERGEABLE）
+>   （`add-whatsnew → main`，+18 −0，1 个文件）
 > - **上游 PR**（真正合并进 KuiklyUI-third-party 的那个）：
 >   https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
 >
-> 上游 PR 为什么没直接用 CLI 建：当前用的 fine-grained PAT 只对本人名下的仓库有写权限，
-> 对 `Tencent-TDS/KuiklyUI-third-party` 只能读。`gh pr create` 和 REST `POST /pulls`
-> 都返回 `Resource not accessible by personal access token (403)`。
+> 上游 PR 为什么没直接用 CLI 建：当前用的 fine-grained PAT 只对本人名下的仓库有写权限
+> （对 `Tencent-TDS/KuiklyUI-third-party` 是 `push: false`），对上游只能读。
+> `gh pr create` 和 REST `POST /pulls` 都会返回 `Resource not accessible by personal access token (403)`。
 > 换成 classic token（`public_repo`）就能一条命令提交，或者直接点上面的链接。
 >
 > 注意：fork 里的 PR 只是自己仓库内的分支合并，**不会通知 Tencent-TDS**，
@@ -41,13 +41,18 @@ https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257
 
 ## 1. 添加到 `KuiklyUI-Libraries.json`
 
-在文件末尾添加：
+在文件末尾添加（字段顺序、缩进均与官方 README 的
+[Library Description Template](https://github.com/Tencent-TDS/KuiklyUI-third-party#library-description-template) 一致；
+**不支持的平台字段直接省略**，不写 `false`）：
 
 ```json
 {
   "githubUrl": "https://github.com/Richard102257/kuikly-whatsnew-kit",
   "examples": [
-    "https://github.com/Richard102257/kuikly-whatsnew-kit"
+    "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/androidApp",
+    "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/iosApp",
+    "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/ohosApp",
+    "https://github.com/Richard102257/kuikly-whatsnew-kit/tree/main/h5App"
   ],
   "componentName": "WhatsNew",
   "componentDescription": "Kuikly 跨端「新功能引导」组件（SvenTiigi/WhatsNewKit 移植），支持自动/手动展示、版本追踪与 patch 回退、自定义布局、主次按钮，提供 Kuikly DSL 与 Compose 页面两种用法",
@@ -61,11 +66,15 @@ https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257
 }
 ```
 
-> 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码。
-> `Js: true` 的依据是 JitPack 上有 `whatsnew-js-1.3.0.klib`（H5 / 小程序都用这份产物）；
-> `Ohos: true` 的依据是 `ohosArm64` klib 和完整 HAP 都能编出来（`ohosApp/`），
-> 但**没有实机运行过**（Intel Mac 无官方模拟器、无真机、无签名账号），PR 描述里写明了。
-> `sDynamic: false`：jsMain 依赖 `localStorage` / `wx.setStorageSync`，没按动态模式验证过。
+> - 组件是纯 Kuikly DSL（`componentType: KuiklyView`），不含平台侧原生代码。
+> - `examples` 按模板「为支持的平台提供 Demo 地址、去掉不支持的」列出
+>   `androidApp` / `iosApp` / `ohosApp` / `h5App` 四个平台 Demo 目录。
+> - `Js: true` 的依据是 JitPack 上有 `whatsnew-js-1.3.0.klib`（H5 / 小程序都用这份产物）；
+>   `Ohos: true` 的依据是 `ohosArm64` klib 和完整 HAP 都能编出来（`ohosApp/`），
+>   但**没有实机运行过**（Intel Mac 无官方模拟器、无真机、无签名账号），PR 描述里写明了。
+> - `Macos` / `Linux` / `Windows` / `Tvos` 不支持，按模板省略不写。
+> - `sDynamic: false`：jsMain 依赖 `localStorage` / `wx.setStorageSync`（浏览器平台接口），
+>   不满足模板里 `sDynamic` 的判定条件。
 
 ## 2. PR 标题
 
@@ -146,6 +155,7 @@ override fun body(): ViewBuilder = {
 - iOS：源码模块（推荐）/ CocoaPods 预编译 XCFramework（`pod 'KuiklyWhatsNew'`）
 - HarmonyOS：同一份 Kuikly DSL 代码，`./gradlew -c settings.ohos.gradle.kts :whatsnew:assemble`
   （KBA Kotlin + `core:...-ohos` + ohpm `@kuikly-open/render`；HAP 构建见 `ohosApp/`）
+- H5 / 微信小程序：JitPack（js klib），复用同一份 commonMain 代码
 ```
 
 ## 4. 提交前检查
@@ -154,5 +164,7 @@ override fun body(): ViewBuilder = {
 - [x] GitHub Release `v1.3.0` 上有 `WhatsNew.xcframework.zip`
 - [x] `pod spec lint KuiklyWhatsNew.podspec` 通过，且已发布到 trunk（`pod 'KuiklyWhatsNew', '~> 1.3.0'`）
 - [x] README 中的版本号与 tag 一致
-- [x] fork 已建、分支 `add-whatsnew` 已推（`compare` 显示 `ahead 1`，只改 1 个文件）
-- [ ] PR 已提交（**待网页确认**：fine-grained PAT 无权限对 Tencent-TDS 建 PR）
+- [x] 条目字段顺序 / 缩进符合官方模板，不支持的平台字段已省略
+- [x] fork 已建、分支 `add-whatsnew`（`36a3910`）已推，只改 1 个文件（+18 行）
+- [x] fork 内 PR #1 已同步到新 commit
+- [ ] 上游 PR 已提交（**待网页确认**：fine-grained PAT 对 Tencent-TDS 无 `push` 权限）
