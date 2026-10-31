@@ -1,15 +1,21 @@
 # KuiklyUI-third-party 注册材料
 
-> **当前状态：fork 和分支都已就绪，PR 只差在网页上点一下。**
+> **当前状态：fork 内 PR 已建；上游 PR 待点一下链接。**
 >
 > - Fork：https://github.com/Richard102257/KuiklyUI-third-party
 > - 分支：`add-whatsnew`（commit `c9a72c9`，只改 `KuiklyUI-Libraries.json`，+15 行）
-> - 一键开 PR：https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
+> - **Fork 内 PR**：https://github.com/Richard102257/KuiklyUI-third-party/pull/1
+>   （`add-whatsnew → main`，+15 −0，1 个文件，MERGEABLE）
+> - **上游 PR**（真正合并进 KuiklyUI-third-party 的那个）：
+>   https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
 >
-> 为什么没直接用 CLI 建 PR：当前用的 fine-grained PAT 只对本人名下的仓库有写权限，
+> 上游 PR 为什么没直接用 CLI 建：当前用的 fine-grained PAT 只对本人名下的仓库有写权限，
 > 对 `Tencent-TDS/KuiklyUI-third-party` 只能读。`gh pr create` 和 REST `POST /pulls`
 > 都返回 `Resource not accessible by personal access token (403)`。
 > 换成 classic token（`public_repo`）就能一条命令提交，或者直接点上面的链接。
+>
+> 注意：fork 里的 PR 只是自己仓库内的分支合并，**不会通知 Tencent-TDS**，
+> 上游维护者看不到。要让库出现在官方目录里，必须再开一次指向上游的 PR。
 
 > 补丁见 [`docs/third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch`](third-party/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch)
 > （与分支上的 commit 一致，JSON 校验通过，共 114 个条目）
@@ -27,9 +33,11 @@ git checkout add-whatsnew
 # git am /path/to/0001-Add-WhatsNew-to-KuiklyUI-Libraries.patch
 ```
 
-然后点这个链接创建 PR（标题与描述见第 2、3 节）：
+然后点这个链接创建**上游** PR（标题与描述见第 2、3 节）：
 
 https://github.com/Tencent-TDS/KuiklyUI-third-party/compare/main...Richard102257:add-whatsnew?expand=1
+
+（fork 内的 PR #1 已由 CLI 建好，只用于自己 review，不等于提交给上游。）
 
 ## 1. 添加到 `KuiklyUI-Libraries.json`
 
